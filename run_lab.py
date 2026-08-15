@@ -35,6 +35,8 @@ from bot.paper.account import PaperAccount  # noqa: E402
 from bot.strategies.chassis import ChassisStrategy  # noqa: E402
 from bot.strategies.lab_ideas import (DonchianSage, RangeSniper,  # noqa: E402
                                       SageRS, SeasonalTrend, VolAwakening)
+from bot.strategies.lab_ideas2 import (Committee, MTFTrend,  # noqa: E402
+                                       TrendPullback, VolTrailExit)
 from bot.strategies.sage import SageStrategy  # noqa: E402
 from bot.trade_gate import set_fee_model  # noqa: E402
 
@@ -46,13 +48,14 @@ PROMO_EXCESS = 8.0          # % mean walk-forward OOS excess
 PROMO_TRADES = 8
 
 IDEAS = {
-    "vol_awakening": (VolAwakening, {"wake_mult": [1.4, 1.6, 2.0],
-                                     "confirm": [1, 2]}),
-    "sage_rs": (SageRS, {"buy_score": [2.5, 3.0], "rs_bars": [120, 240]}),
+    # gen 2 — informed by gen-1 verdicts
+    "trend_pullback": (TrendPullback, {"rsi_lo": [30, 35, 40]}),
+    "committee": (Committee, {"sage_buy": [2.5, 3.0]}),
+    "mtf_trend": (MTFTrend, {"day_sma": [20, 30, 50]}),
+    "vol_trail_exit": (VolTrailExit, {"atr_mult": [2.5, 3.0, 3.5]}),
+    # gen 1 — proven performers kept as the bar to beat
     "donchian_sage": (DonchianSage, {"min_score": [1.0, 1.5, 2.0],
                                      "entry_period": [20, 30]}),
-    "range_sniper": (RangeSniper, {"rsi_lo": [20, 25, 30]}),
-    "seasonal_trend": (SeasonalTrend, {"trend_ema": [100, 150, 200]}),
     "sage_v2": (SageStrategy, {"buy_score": [2.5, 3.0, 3.5],
                                "sell_score": [0.0, 0.5]}),
 }
