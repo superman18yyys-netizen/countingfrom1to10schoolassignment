@@ -1,0 +1,205 @@
+# USDC Coinbase trading bot configuration
+# All values are safe defaults; every key can be overridden via CLI flags.
+
+# Trading universe: USDC-quoted products on Coinbase Advanced Trade.
+# Six majors spanning the market (not 3 highly-correlated ones) so there
+# is some genuine cross-sectional diversity; all are liquid with years of
+# USDC history. (BTC almost ~always the market driver; the rest cover
+# different sectors/rotation.)
+pairs:
+  - BTC-USDC
+  - ETH-USDC
+  - SOL-USDC
+  - DOGE-USDC
+  - XRP-USDC
+  - ADA-USDC
+
+# Candle timeframe (Coinbase enum): ONE_MINUTE, FIVE_MINUTE, FIFTEEN_MINUTE,
+# THIRTY_MINUTE, ONE_HOUR, TWO_HOUR, FOUR_HOUR, SIX_HOUR, ONE_DAY
+# FOUR_HOUR: measured on 2y of real data (Aug 2026), the full chassis
+# averaged +22.1% excess / 17.8% maxDD on 4H bars vs +0.5% / 41.0% on
+# 1H — at ~0.6% taker fees the 1H timeframe cannot clear the ~1.4%
+# round trip often enough. 1H was the previous setting; it is the
+# shortest horizon we let anything trade, but the live zoo now runs 4H.
+granularity: FOUR_HOUR
+
+# How much history to download for backtesting (days).
+history_days: 365
+
+# Paper trading (pretend money) settings.
+paper_capital: 10000
+position_fraction: 0.25   # fraction of equity deployed per trade
+max_positions: 3
+poll_seconds: 30          # REST data polling interval
+
+# Costs (Coinbase Advanced Trade retail tier, research-verified Aug 2026).
+taker_fee: 0.006          # ~0.6% taker
+slippage: 0.001           # pessimistic 0.1% per fill
+
+# Fee-aware gate (see docs/superpowers/specs/2026-08-15-fee-aware-trading-design.md).
+# Constants are principled fixed values — do NOT tune these per strategy.
+fee_aware:
+  margin: 1.5              # expected move must clear rtc x margin
+  expected_hold_bars: 16   # sqrt-scaled horizon for the EV estimate
+  min_profit_mult: 1.0     # profit exits need >= rtc x this
+  stop_mult: 3.0           # disaster stop at -rtc x this
+  max_hold_bars: 96        # time stop (bars)
+  breaker_trades: 8        # trailing gross-loss window
+  cooldown_bars: 24        # entry pause after breaker trips
+  fee_budget_pct: 0.02     # max fees per 24h as fraction of capital
+
+# Storage + output.
+db_path: data/trading.db
+out_dir: reports
+
+# Strategies to run. Comment out / remove any you don't want.
+strategies:
+  momentum:
+    ema_fast: 12
+    ema_slow: 26
+    trend_ema: 200
+
+  mean_reversion:
+    rsi_period: 14
+    bb_period: 20
+    bb_std: 2.0
+    oversold: 30
+    overbought: 70
+    exit_rsi: 55
+
+  ml:
+    horizon: 6            # bars of future return for the UP/DOWN label
+    min_gain: 0.013       # label threshold ~ round-trip cost (fee + slippage)
+    train_days: 60
+    test_days: 7
+    purge_bars: 12        # no-leakage gap between train and test windows
+    buy_threshold: 0.60   # enter when model P(up) >= threshold
+    exit_threshold: 0.50  # exit when model P(up) <= threshold
+    expiry_bars: 48       # retrain cadence in live/paper mode
+
+  ml_trend:
+    horizon: 6            # forward lookahead bars for the timing label
+    min_gain: 0.013       # ~0.6% taker + 0.1% slippage per side
+    regime_horizon: 24    # forward lookahead bars for the regime label
+    regime_tol: 0.004     # regime flat zone half-width
+    regime_up: 0.50       # P(regime=up) threshold for tradability
+    buy: 0.60             # P(timing=up) entry threshold
+    exit: 0.50            # P(timing=up) exit threshold
+
+  deep_value:
+    drawdown_window: 96   # bars for the rolling high (4 days @1h)
+    drawdown_pct: 0.30    # enter after -30% from the high
+    recover_ema: 24       # fast EMA recovery confirmation
+    momentum_bars: 24     # short-term momentum window
+    recover_prct: 0.30    # +30% profit target above the dip low
+    stop_pct: 0.12        # -12% stop below the dip low
+
+  order_flow:
+    window_sec: 300       # order-flow aggregation window (5 min)
+    flow_momentum_sec: 900
+    drawdown_window: 96   # rolling high bars (dip filter)
+    drawdown_pct: 0.06    # only overweight flow after ~this drawdown
+    buy_ratio_thresh: 1.35
+    cvd_min_pct: 0.005
+    book_bid_frac: 0.52
+    target_pct: 0.05
+    stop_pct: 0.04
+
+  llm_trader:
+    base_url: https://opencode.ai/zen/go/v1
+    model: deepseek-v4-flash
+    thinking: true
+    min_interval_sec: 900    # don't call the LLM more than every 15 min
+    drawdown_window: 96
+    drawdown_pct: 0.10
+    target_pct: 0.05
+    stop_pct: 0.04
+    max_positions_total: 4
+    risk_per_trade: 0.02
+    fee_rate: 0.014
+
+  hold_cycle:
+    trend_sma: 1000     # very long trend filter (few, big trades)
+    enter_frac: 0.60    # deploy 60% on entry (one big trade per cycle)
+    exit_sma: 500
+
+  fade_extreme:
+    lookback: 200
+    down_thresh: 0.12   # buy after -12% move
+    up_thresh: 0.10
+    target_pct: 0.08
+    stop_pct: 0.05
+
+  deep_recovery:
+    drawdown_window: 48
+    drawdown_pct: 0.12
+    recover_ema: 9
+    momentum_bars: 6
+    target_pct: 0.12
+    stop_pct: 0.06
+
+  guarded_momentum:
+    atr_hurdle_pct: 0.008
+    trend_sma: 200
+    confirm_bars: 2
+    mode: trend
+
+  guarded_macd:
+    atr_hurdle_pct: 0.008
+    trend_sma: 200
+    confirm_bars: 2
+    mode: trend
+
+  guarded_donchian:
+    atr_hurdle_pct: 0.008
+    trend_sma: 200
+    confirm_bars: 2
+    mode: trend
+
+  guarded_rsi2:
+    atr_hurdle_pct: 0.008
+    trend_sma: 200
+    confirm_bars: 2
+    mode: range
+
+  guarded_stochastic:
+    atr_hurdle_pct: 0.008
+    trend_sma: 200
+    confirm_bars: 2
+    mode: range
+
+  guarded_grid:
+    atr_hurdle_pct: 0.008
+    trend_sma: 200
+    confirm_bars: 2
+    mode: range
+
+  deep_recovery_v2:
+    drawdown_window: 48
+    base_drawdown_pct: 0.12
+    atr_ref_pct: 0.015
+    recover_ema: 9
+    momentum_bars: 6
+    volume_z_min: 0.5
+    target_pct: 0.12
+    stop_pct: 0.06
+
+  adaptive_grid:
+    reference_bars: 96
+    base_step: 0.012
+    atr_mult: 2.0
+    fee_clear_mult: 1.5
+    round_trip_cost: 0.014
+    trend_sma: 200
+    range_band: 0.05
+
+  consensus:
+    drawdown_window: 96
+    drawdown_pct: 0.10
+    recover_ema: 12
+    momentum_bars: 12
+    volume_z_min: 0.3
+    trend_sma: 200
+    min_votes: 3
+    target_pct: 0.15
+    stop_pct: 0.07

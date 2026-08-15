@@ -1,0 +1,28 @@
+{
+ "promotable": true,
+ "updated_at": "2026-08-15 08:21 UTC",
+ "threshold_excess_pct": 0.5,
+ "champion": {
+  "strategy": "consensus",
+  "params": {},
+  "excess_pct": 0.97,
+  "eligible": true
+ },
+ "runner_up": [
+  {
+   "strategy": "order_flow",
+   "params": {},
+   "excess_pct": 0.86
+  },
+  {
+   "strategy": "deep_recovery",
+   "params": {},
+   "excess_pct": 0.68
+  },
+  {
+   "strategy": "grid_trader",
+   "params": {},
+   "excess_pct": 0.66
+  }
+ ]
+}

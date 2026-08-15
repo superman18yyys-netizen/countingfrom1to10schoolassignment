@@ -1,0 +1,347 @@
+{
+ "generated": "20260815-0821",
+ "windows": [
+  [
+   "2026-06-15 00:00:00+00:00",
+   "2026-06-22 00:00:00+00:00"
+  ],
+  [
+   "2026-06-22 00:00:00+00:00",
+   "2026-06-29 00:00:00+00:00"
+  ],
+  [
+   "2026-06-29 00:00:00+00:00",
+   "2026-07-06 00:00:00+00:00"
+  ],
+  [
+   "2026-07-06 00:00:00+00:00",
+   "2026-07-13 00:00:00+00:00"
+  ]
+ ],
+ "rows": [
+  {
+   "id": "consensus",
+   "strategy": "consensus",
+   "params": {},
+   "trades": 13,
+   "mean_excess_pct": 0.97,
+   "median_excess_pct": 2.56,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.92,
+   "mean_sharpe": -0.03,
+   "eligible": true
+  },
+  {
+   "id": "order_flow",
+   "strategy": "order_flow",
+   "params": {},
+   "trades": 19,
+   "mean_excess_pct": 0.86,
+   "median_excess_pct": 1.97,
+   "worst_excess_pct": -24.03,
+   "mean_dd_pct": -2.71,
+   "mean_sharpe": -0.013,
+   "eligible": true
+  },
+  {
+   "id": "deep_recovery",
+   "strategy": "deep_recovery",
+   "params": {},
+   "trades": 6,
+   "mean_excess_pct": 0.68,
+   "median_excess_pct": 3.76,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.63,
+   "mean_sharpe": -0.085,
+   "eligible": true
+  },
+  {
+   "id": "grid_trader",
+   "strategy": "grid_trader",
+   "params": {},
+   "trades": 7,
+   "mean_excess_pct": 0.66,
+   "median_excess_pct": 3.59,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.63,
+   "mean_sharpe": 0.001,
+   "eligible": true
+  },
+  {
+   "id": "rsi2",
+   "strategy": "rsi2",
+   "params": {},
+   "trades": 7,
+   "mean_excess_pct": 0.62,
+   "median_excess_pct": 3.69,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.6,
+   "mean_sharpe": -0.116,
+   "eligible": true
+  },
+  {
+   "id": "fade_extreme",
+   "strategy": "fade_extreme",
+   "params": {},
+   "trades": 14,
+   "mean_excess_pct": 0.45,
+   "median_excess_pct": 1.68,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -1.36,
+   "mean_sharpe": -0.047,
+   "eligible": true
+  },
+  {
+   "id": "bbands_breakout",
+   "strategy": "bbands_breakout",
+   "params": {},
+   "trades": 10,
+   "mean_excess_pct": 0.14,
+   "median_excess_pct": 1.23,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -1.44,
+   "mean_sharpe": -0.129,
+   "eligible": true
+  },
+  {
+   "id": "stochastic_reversion",
+   "strategy": "stochastic_reversion",
+   "params": {},
+   "trades": 10,
+   "mean_excess_pct": -0.16,
+   "median_excess_pct": 2.09,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -1.39,
+   "mean_sharpe": -0.142,
+   "eligible": true
+  },
+  {
+   "id": "macd_cross",
+   "strategy": "macd_cross",
+   "params": {},
+   "trades": 1,
+   "mean_excess_pct": 1.11,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.09,
+   "mean_sharpe": 0.053,
+   "eligible": false
+  },
+  {
+   "id": "mean_reversion",
+   "strategy": "mean_reversion",
+   "params": {},
+   "trades": 1,
+   "mean_excess_pct": 1.08,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.03,
+   "mean_sharpe": 0.158,
+   "eligible": false
+  },
+  {
+   "id": "dca_bot",
+   "strategy": "dca_bot",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "ml_trend",
+   "strategy": "ml_trend",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "llm_trader",
+   "strategy": "llm_trader",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "guarded_momentum",
+   "strategy": "guarded_momentum",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "guarded_macd",
+   "strategy": "guarded_macd",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "guarded_stochastic",
+   "strategy": "guarded_stochastic",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "guarded_grid",
+   "strategy": "guarded_grid",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "deep_recovery_v2",
+   "strategy": "deep_recovery_v2",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "adaptive_grid",
+   "strategy": "adaptive_grid",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "trend_runner",
+   "strategy": "trend_runner",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 1.01,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "momentum",
+   "strategy": "momentum",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 0.99,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.05,
+   "mean_sharpe": -0.033,
+   "eligible": false
+  },
+  {
+   "id": "donchian_breakout",
+   "strategy": "donchian_breakout",
+   "params": {},
+   "trades": 4,
+   "mean_excess_pct": 0.93,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -27.99,
+   "mean_dd_pct": -0.46,
+   "mean_sharpe": -0.07,
+   "eligible": false
+  },
+  {
+   "id": "hold_cycle",
+   "strategy": "hold_cycle",
+   "params": {},
+   "trades": 0,
+   "mean_excess_pct": 0.92,
+   "median_excess_pct": 3.77,
+   "worst_excess_pct": -30.94,
+   "mean_dd_pct": 0.0,
+   "mean_sharpe": NaN,
+   "eligible": false
+  },
+  {
+   "id": "guarded_donchian",
+   "strategy": "guarded_donchian",
+   "params": {},
+   "trades": 1,
+   "mean_excess_pct": 0.91,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -27.99,
+   "mean_dd_pct": -0.28,
+   "mean_sharpe": -0.147,
+   "eligible": false
+  },
+  {
+   "id": "guarded_rsi2",
+   "strategy": "guarded_rsi2",
+   "params": {},
+   "trades": 2,
+   "mean_excess_pct": 0.85,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.16,
+   "mean_sharpe": -0.294,
+   "eligible": false
+  },
+  {
+   "id": "deep_value",
+   "strategy": "deep_value",
+   "params": {},
+   "trades": 1,
+   "mean_excess_pct": 0.84,
+   "median_excess_pct": 3.86,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.21,
+   "mean_sharpe": -0.237,
+   "eligible": false
+  },
+  {
+   "id": "golden_cross",
+   "strategy": "golden_cross",
+   "params": {},
+   "trades": 2,
+   "mean_excess_pct": 0.77,
+   "median_excess_pct": 3.44,
+   "worst_excess_pct": -30.85,
+   "mean_dd_pct": -0.34,
+   "mean_sharpe": -0.152,
+   "eligible": false
+  }
+ ]
+}
