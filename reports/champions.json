@@ -1,28 +1,38 @@
 {
  "promotable": true,
- "updated_at": "2026-08-15 08:21 UTC",
+ "updated_at": "2026-08-15 09:15 UTC",
  "threshold_excess_pct": 0.5,
  "champion": {
-  "strategy": "consensus",
-  "params": {},
-  "excess_pct": 0.97,
+  "strategy": "golden_cross",
+  "params": {
+   "fast": 39,
+   "slow": 178
+  },
+  "excess_pct": 0.56,
   "eligible": true
  },
  "runner_up": [
   {
-   "strategy": "order_flow",
-   "params": {},
-   "excess_pct": 0.86
+   "strategy": "momentum",
+   "params": {
+    "ema_fast": 7,
+    "ema_slow": 16,
+    "trend_ema": 400
+   },
+   "excess_pct": 0.56
   },
   {
    "strategy": "deep_recovery",
    "params": {},
-   "excess_pct": 0.68
+   "excess_pct": 0.55
   },
   {
    "strategy": "grid_trader",
-   "params": {},
-   "excess_pct": 0.66
+   "params": {
+    "reference_bars": 140,
+    "grid_step": 0.014
+   },
+   "excess_pct": 0.54
   }
  ]
 }
