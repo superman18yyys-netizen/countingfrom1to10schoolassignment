@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-15 09:22 UTC",
+ "generated": "2026-08-15 09:44 UTC",
  "baseline_sage_oos_pct": 42.7,
  "method": "walk-forward 5 folds, purge 200",
  "board": [
@@ -370,6 +370,64 @@
     "atr_mult": 3.0
    },
    "promotable": true
+  },
+  {
+   "idea": "swing_rider",
+   "folds": [
+    {
+     "fold": 1,
+     "params": {
+      "surge_pct": 0.05,
+      "atr_mult": 4.5
+     },
+     "mean_excess_pct": 31.06,
+     "trades": 29
+    },
+    {
+     "fold": 2,
+     "params": {
+      "surge_pct": 0.05,
+      "atr_mult": 4.5
+     },
+     "mean_excess_pct": -63.41,
+     "trades": 27
+    },
+    {
+     "fold": 3,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 4.5
+     },
+     "mean_excess_pct": 25.33,
+     "trades": 28
+    },
+    {
+     "fold": 4,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 4.5
+     },
+     "mean_excess_pct": 20.68,
+     "trades": 37
+    },
+    {
+     "fold": 5,
+     "params": {
+      "surge_pct": 0.05,
+      "atr_mult": 4.5
+     },
+     "mean_excess_pct": 20.98,
+     "trades": 15
+    }
+   ],
+   "mean_oos_excess_pct": 6.93,
+   "total_trades": 136,
+   "winning_folds": "4/5",
+   "final_params": {
+    "surge_pct": 0.05,
+    "atr_mult": 4.5
+   },
+   "promotable": false
   }
  ]
 }

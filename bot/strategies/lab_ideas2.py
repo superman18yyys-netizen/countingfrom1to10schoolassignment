@@ -141,3 +141,47 @@ class VolTrailExit(Strategy):
         sig[buy.fillna(False)] = 1
         sig[sell.fillna(False)] = -1
         return sig
+
+
+class SwingRider(Strategy):
+    """Born from the miss analysis (Aug 2026): 84% of the >=8% swings
+    the bots missed were rallies that began INSIDE downtrends (signal-
+    blind), and on the swings they did catch they exited at ~+2% while
+    +19.8% more was available (fee-band profit taking).
+
+    Fixes both directly:
+      ENTRY  — momentum ignition: price up >= surge_pct over surge_bars
+               (a rally is a rally, whatever the regime; the chassis
+               stop + sizing bound the risk)
+      EXIT   — chandelier trail: 50-bar high minus atr_mult*ATR. Winners
+               ride the swing; losers cut immediately.
+    """
+    name = "swing_rider"
+    DEFAULTS = {"surge_pct": 0.05, "surge_bars": 12,
+                "atr_period": 14, "atr_mult": 2.5, "cooldown": 6,
+                "vol_ok_pctile": 0.30}
+
+    def warmup_bars(self) -> int:
+        return 200
+
+    def compute_signals(self, df: pd.DataFrame, live: bool = False) -> pd.Series:
+        import numpy as _np
+        p = {**self.DEFAULTS, **self.params}
+        close = df["close"]
+        surge = close / close.shift(int(p["surge_bars"])) - 1.0
+        a = atr(df["high"], df["low"], close, int(p["atr_period"]))
+        a_pct = a / close
+        a_pctile = a_pct.rolling(540, min_periods=120).apply(
+            lambda v: (v <= v[-1]).mean(), raw=True).fillna(0.5)
+        ignite = (surge >= float(p["surge_pct"])) & \
+                 (a_pctile >= float(p["vol_ok_pctile"]))
+        # take only the FIRST ignition bar of a cluster (cooldown)
+        buy = ignite & ~ignite.shift(1, fill_value=False)
+        buy = buy & ~buy.rolling(int(p["cooldown"])).sum().shift(1).fillna(0).gt(0)
+        chan = df["high"].rolling(50, min_periods=10).max() \
+            - float(p["atr_mult"]) * a
+        sell = close < chan
+        sig = pd.Series(0, index=df.index, dtype=int)
+        sig[buy.fillna(False)] = 1
+        sig[sell.fillna(False)] = -1
+        return sig

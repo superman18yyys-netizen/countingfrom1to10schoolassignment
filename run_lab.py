@@ -36,7 +36,8 @@ from bot.strategies.chassis import ChassisStrategy  # noqa: E402
 from bot.strategies.lab_ideas import (DonchianSage, RangeSniper,  # noqa: E402
                                       SageRS, SeasonalTrend, VolAwakening)
 from bot.strategies.lab_ideas2 import (Committee, MTFTrend,  # noqa: E402
-                                       TrendPullback, VolTrailExit)
+                                       TrendPullback, VolTrailExit,
+                                       SwingRider)
 from bot.strategies.sage import SageStrategy  # noqa: E402
 from bot.trade_gate import set_fee_model  # noqa: E402
 
@@ -48,6 +49,9 @@ PROMO_EXCESS = 8.0          # % mean walk-forward OOS excess
 PROMO_TRADES = 8
 
 IDEAS = {
+    # gen 3 — born from the miss analysis
+    "swing_rider": (SwingRider, {"surge_pct": [0.05, 0.06],
+                                  "atr_mult": [3.5, 4.5, 5.5]}),
     # gen 2 — informed by gen-1 verdicts
     "trend_pullback": (TrendPullback, {"rsi_lo": [30, 35, 40]}),
     "committee": (Committee, {"sage_buy": [2.5, 3.0]}),
