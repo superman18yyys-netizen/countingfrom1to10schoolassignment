@@ -70,6 +70,10 @@ def build_context(df: pd.DataFrame) -> pd.DataFrame:
     out["pct_rank_1y"] = ((close - roll_min) / rng).clip(0.0, 1.0).fillna(0.5)
 
     out["context_confidence"] = min(1.0, n / CONTEXT_FULL_BARS)
+
+    # 12-bar price surge (feeds the chassis drought override: a real
+    # surge is vol expansion even when the lagging percentile disagrees)
+    out["surge_12"] = (close / close.shift(12) - 1.0).fillna(0.0)
     return out
 
 

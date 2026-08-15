@@ -103,7 +103,12 @@ def in_vol_drought(row: dict) -> bool:
     """True when ATR is in its lowest quartile vs the trailing 90 days
     (empirically the regime where entries cannot clear fees; see
     context.py). Blocks entries for every family — in a drought the
-    correct human decision is to stand aside."""
+    correct human decision is to stand aside.
+
+    NOTE: a surge-override variant (>=5% surge defeats the veto) was
+    A/B tested on 2y data (Aug 2026) and REJECTED: fleet total went
+    +89.6% -> +88.2% with worse drawdown for 2 of 5 bots. The
+    drought-blocked swings are not worth the false entries it lets in."""
     return float(row.get("atr_pctile_long", 1.0)) < VOL_DROUGHT_PCTL
 
 

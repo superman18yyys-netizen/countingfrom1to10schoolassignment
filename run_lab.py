@@ -38,6 +38,7 @@ from bot.strategies.lab_ideas import (DonchianSage, RangeSniper,  # noqa: E402
 from bot.strategies.lab_ideas2 import (Committee, MTFTrend,  # noqa: E402
                                        TrendPullback, VolTrailExit,
                                        SwingRider)
+from bot.strategies.lab_ideas3 import RatchetRider  # noqa: E402
 from bot.strategies.sage import SageStrategy  # noqa: E402
 from bot.trade_gate import set_fee_model  # noqa: E402
 
@@ -49,6 +50,9 @@ PROMO_EXCESS = 8.0          # % mean walk-forward OOS excess
 PROMO_TRADES = 8
 
 IDEAS = {
+    # gen 4 — the exit-policy fix (ratchet flips losers to winners)
+    "ratchet_rider": (RatchetRider, {"surge_pct": [0.05, 0.06],
+                                     "trail_mult": [2.5, 3.0]}),
     # gen 3 — born from the miss analysis
     "swing_rider": (SwingRider, {"surge_pct": [0.05, 0.06],
                                   "atr_mult": [3.5, 4.5, 5.5]}),

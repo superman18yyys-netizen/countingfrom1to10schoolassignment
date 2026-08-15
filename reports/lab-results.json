@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-15 09:44 UTC",
+ "generated": "2026-08-15 10:01 UTC",
  "baseline_sage_oos_pct": 42.7,
  "method": "walk-forward 5 folds, purge 200",
  "board": [
@@ -426,6 +426,64 @@
    "final_params": {
     "surge_pct": 0.05,
     "atr_mult": 4.5
+   },
+   "promotable": false
+  },
+  {
+   "idea": "ratchet_rider",
+   "folds": [
+    {
+     "fold": 1,
+     "params": {
+      "surge_pct": 0.05,
+      "trail_mult": 2.5
+     },
+     "mean_excess_pct": 32.02,
+     "trades": 57
+    },
+    {
+     "fold": 2,
+     "params": {
+      "surge_pct": 0.05,
+      "trail_mult": 2.5
+     },
+     "mean_excess_pct": -67.74,
+     "trades": 41
+    },
+    {
+     "fold": 3,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 2.5
+     },
+     "mean_excess_pct": 27.22,
+     "trades": 34
+    },
+    {
+     "fold": 4,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 2.5
+     },
+     "mean_excess_pct": 23.84,
+     "trades": 38
+    },
+    {
+     "fold": 5,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 2.5
+     },
+     "mean_excess_pct": 17.21,
+     "trades": 20
+    }
+   ],
+   "mean_oos_excess_pct": 6.51,
+   "total_trades": 190,
+   "winning_folds": "4/5",
+   "final_params": {
+    "surge_pct": 0.06,
+    "trail_mult": 2.5
    },
    "promotable": false
   }
