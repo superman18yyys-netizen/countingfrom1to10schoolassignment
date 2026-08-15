@@ -1,0 +1,97 @@
+{
+ "trained_at": "2026-08-15 08:31 UTC",
+ "params": {
+  "trend_ema": 200,
+  "fast": 12,
+  "slow": 26,
+  "rsi_period": 14,
+  "dip_rsi": 32,
+  "panic_rsi": 24,
+  "bb_period": 20,
+  "bb_std": 2.0,
+  "mom_bars": 24,
+  "buy_score": 3.0,
+  "sell_score": 0.0
+ },
+ "grid": [
+  {
+   "buy_score": 3.0,
+   "sell_score": 0.0
+  },
+  {
+   "buy_score": 3.0,
+   "sell_score": 1.0
+  },
+  {
+   "buy_score": 3.0,
+   "sell_score": -1.0
+  },
+  {
+   "buy_score": 2.5,
+   "sell_score": 0.0
+  },
+  {
+   "buy_score": 2.5,
+   "sell_score": -1.0
+  }
+ ],
+ "validation": [
+  {
+   "pair": "BTC-USDC",
+   "return_pct": -4.08,
+   "buy_hold_pct": -30.32,
+   "excess_pct": 26.24,
+   "trades": 4,
+   "fees": 220.74,
+   "realized": -407.78
+  },
+  {
+   "pair": "ETH-USDC",
+   "return_pct": -1.73,
+   "buy_hold_pct": -39.86,
+   "excess_pct": 38.13,
+   "trades": 2,
+   "fees": 94.76,
+   "realized": -173.19
+  },
+  {
+   "pair": "SOL-USDC",
+   "return_pct": -1.9,
+   "buy_hold_pct": -44.61,
+   "excess_pct": 42.71,
+   "trades": 1,
+   "fees": 51.29,
+   "realized": -189.79
+  },
+  {
+   "pair": "DOGE-USDC",
+   "return_pct": 1.86,
+   "buy_hold_pct": -51.32,
+   "excess_pct": 53.19,
+   "trades": 2,
+   "fees": 99.91,
+   "realized": 186.46
+  },
+  {
+   "pair": "XRP-USDC",
+   "return_pct": -6.63,
+   "buy_hold_pct": -52.67,
+   "excess_pct": 46.04,
+   "trades": 4,
+   "fees": 212.09,
+   "realized": -662.7
+  },
+  {
+   "pair": "ADA-USDC",
+   "return_pct": -4.81,
+   "buy_hold_pct": -54.7,
+   "excess_pct": 49.89,
+   "trades": 5,
+   "fees": 216.02,
+   "realized": -481.07
+  }
+ ],
+ "mean_excess_pct": 42.7,
+ "total_trades": 18,
+ "promotable": true
+}
