@@ -1,0 +1,668 @@
+{
+ "generated": "2026-08-15 11:26 UTC",
+ "span": "6y BTC+ETH 4H",
+ "board": [
+  {
+   "name": "mtf_trend",
+   "mean_excess_pct": -9.76,
+   "mean_ret_pct": 4.71,
+   "trades": 81,
+   "folds_won": "3/10",
+   "per_fold": [
+    {
+     "fold": 1,
+     "params": {
+      "day_sma": 20
+     },
+     "excess": -0.6541797754576828,
+     "ret": 0.08557082311296982,
+     "trades": 9
+    },
+    {
+     "fold": 2,
+     "params": {
+      "day_sma": 20
+     },
+     "excess": -0.029488447460556733,
+     "ret": 0.0692941761050444,
+     "trades": 11
+    },
+    {
+     "fold": 3,
+     "params": {
+      "day_sma": 20
+     },
+     "excess": 0.4359339557335578,
+     "ret": 0.023483225555862075,
+     "trades": 8
+    },
+    {
+     "fold": 4,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": -0.11657065728491256,
+     "ret": 0.04379849990965756,
+     "trades": 8
+    },
+    {
+     "fold": 5,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": -0.06592261896347745,
+     "ret": 0.055840504385616774,
+     "trades": 10
+    },
+    {
+     "fold": 6,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": -0.8650545211229896,
+     "ret": -0.05062208477144031,
+     "trades": 11
+    },
+    {
+     "fold": 7,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": -0.2544049090124374,
+     "ret": 0.13761537962915038,
+     "trades": 6
+    },
+    {
+     "fold": 8,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": 0.21784763803962032,
+     "ret": 0.05076169015936294,
+     "trades": 5
+    },
+    {
+     "fold": 9,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": -0.039790304169880164,
+     "ret": -0.014150374186490622,
+     "trades": 6
+    },
+    {
+     "fold": 10,
+     "params": {
+      "day_sma": 30
+     },
+     "excess": 0.3960307952277169,
+     "ret": 0.06965738583502423,
+     "trades": 7
+    }
+   ],
+   "final_params": {
+    "day_sma": 30
+   },
+   "graduated": false
+  },
+  {
+   "name": "sage",
+   "mean_excess_pct": -12.35,
+   "mean_ret_pct": 2.11,
+   "trades": 0,
+   "folds_won": "3/10",
+   "per_fold": [
+    {
+     "fold": 1,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.7186126989914757,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 2,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.07764472398642425,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 3,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": 0.4335886297568726,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 4,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.13923125761539323,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 5,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.10062522376991734,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 6,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.7932945367723725,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 7,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.3708823890624109,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 8,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": 0.18822384745943427,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    },
+    {
+     "fold": 9,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": -0.004484230642680831,
+     "ret": 0.02115569934070871,
+     "trades": 0
+    },
+    {
+     "fold": 10,
+     "params": {
+      "buy_score": 3.5,
+      "sell_score": 0.0
+     },
+     "excess": 0.34751130897186955,
+     "ret": 0.02113789957917689,
+     "trades": 0
+    }
+   ],
+   "final_params": {
+    "buy_score": 3.5,
+    "sell_score": 0.0
+   },
+   "graduated": false
+  },
+  {
+   "name": "donchian_sage",
+   "mean_excess_pct": -12.95,
+   "mean_ret_pct": 1.52,
+   "trades": 103,
+   "folds_won": "3/10",
+   "per_fold": [
+    {
+     "fold": 1,
+     "params": {
+      "min_score": 2.0,
+      "entry_period": 20
+     },
+     "excess": -0.7305133136719055,
+     "ret": 0.009237284898747089,
+     "trades": 1
+    },
+    {
+     "fold": 2,
+     "params": {
+      "min_score": 2.0,
+      "entry_period": 20
+     },
+     "excess": -0.06731413841307282,
+     "ret": 0.031468485152528314,
+     "trades": 1
+    },
+    {
+     "fold": 3,
+     "params": {
+      "min_score": 2.0,
+      "entry_period": 20
+     },
+     "excess": 0.40392209004007745,
+     "ret": -0.008528640137618282,
+     "trades": 5
+    },
+    {
+     "fold": 4,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": -0.08464853137756734,
+     "ret": 0.07572062581700278,
+     "trades": 15
+    },
+    {
+     "fold": 5,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": -0.10849846320250067,
+     "ret": 0.013264660146593554,
+     "trades": 11
+    },
+    {
+     "fold": 6,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": -0.8605739289306819,
+     "ret": -0.04614149257913247,
+     "trades": 22
+    },
+    {
+     "fold": 7,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": -0.2652568137978836,
+     "ret": 0.1267634748437042,
+     "trades": 14
+    },
+    {
+     "fold": 8,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": 0.15387446048861736,
+     "ret": -0.01321148739164002,
+     "trades": 13
+    },
+    {
+     "fold": 9,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": -0.07305802790516991,
+     "ret": -0.04741809792178037,
+     "trades": 12
+    },
+    {
+     "fold": 10,
+     "params": {
+      "min_score": 1.5,
+      "entry_period": 30
+     },
+     "excess": 0.3371963950796784,
+     "ret": 0.010822985686985753,
+     "trades": 9
+    }
+   ],
+   "final_params": {
+    "min_score": 1.5,
+    "entry_period": 30
+   },
+   "graduated": false
+  },
+  {
+   "name": "swing_rider",
+   "mean_excess_pct": -14.1,
+   "mean_ret_pct": 0.37,
+   "trades": 130,
+   "folds_won": "3/10",
+   "per_fold": [
+    {
+     "fold": 1,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 3.5
+     },
+     "excess": -0.7230348011661247,
+     "ret": 0.016715797404527832,
+     "trades": 12
+    },
+    {
+     "fold": 2,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 3.5
+     },
+     "excess": -0.10263162635381884,
+     "ret": -0.0038490027882177036,
+     "trades": 17
+    },
+    {
+     "fold": 3,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 3.5
+     },
+     "excess": 0.37363199019899185,
+     "ret": -0.03881873997870389,
+     "trades": 11
+    },
+    {
+     "fold": 4,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 3.5
+     },
+     "excess": -0.10688155684205486,
+     "ret": 0.05348760035251526,
+     "trades": 12
+    },
+    {
+     "fold": 5,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 3.5
+     },
+     "excess": -0.0692261927968012,
+     "ret": 0.052536930552293026,
+     "trades": 4
+    },
+    {
+     "fold": 6,
+     "params": {
+      "surge_pct": 0.05,
+      "atr_mult": 4.5
+     },
+     "excess": -0.8442754889496098,
+     "ret": -0.02984305259806047,
+     "trades": 23
+    },
+    {
+     "fold": 7,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 4.5
+     },
+     "excess": -0.27971026774562135,
+     "ret": 0.11231002089596642,
+     "trades": 15
+    },
+    {
+     "fold": 8,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 4.5
+     },
+     "excess": 0.15714650091081905,
+     "ret": -0.009939446969438326,
+     "trades": 14
+    },
+    {
+     "fold": 9,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 4.5
+     },
+     "excess": -0.0701859524098436,
+     "ret": -0.04454602242645406,
+     "trades": 10
+    },
+    {
+     "fold": 10,
+     "params": {
+      "surge_pct": 0.06,
+      "atr_mult": 4.5
+     },
+     "excess": 0.2554760708491546,
+     "ret": -0.07089733854353808,
+     "trades": 12
+    }
+   ],
+   "final_params": {
+    "surge_pct": 0.06,
+    "atr_mult": 4.5
+   },
+   "graduated": false
+  },
+  {
+   "name": "vol_trail_exit",
+   "mean_excess_pct": -14.77,
+   "mean_ret_pct": -0.3,
+   "trades": 152,
+   "folds_won": "3/10",
+   "per_fold": [
+    {
+     "fold": 1,
+     "params": {
+      "atr_mult": 3.5
+     },
+     "excess": -0.6801091569042175,
+     "ret": 0.05964144166643515,
+     "trades": 13
+    },
+    {
+     "fold": 2,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": -0.09948641855611778,
+     "ret": -0.0007037949905166485,
+     "trades": 18
+    },
+    {
+     "fold": 3,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": 0.39871319045963693,
+     "ret": -0.0137375397180588,
+     "trades": 14
+    },
+    {
+     "fold": 4,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": -0.18968704949448661,
+     "ret": -0.029317892299916493,
+     "trades": 19
+    },
+    {
+     "fold": 5,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": -0.1509215732996706,
+     "ret": -0.02915844995057637,
+     "trades": 11
+    },
+    {
+     "fold": 6,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": -0.7749354531401849,
+     "ret": 0.03949698321136452,
+     "trades": 21
+    },
+    {
+     "fold": 7,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": -0.3700673247286609,
+     "ret": 0.021952963912926893,
+     "trades": 16
+    },
+    {
+     "fold": 8,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": 0.15308962241798607,
+     "ret": -0.013996325462271308,
+     "trades": 11
+    },
+    {
+     "fold": 9,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": -0.08934878082109388,
+     "ret": -0.06370885083770433,
+     "trades": 15
+    },
+    {
+     "fold": 10,
+     "params": {
+      "atr_mult": 2.5
+     },
+     "excess": 0.32565088858937774,
+     "ret": -0.0007225208033149189,
+     "trades": 14
+    }
+   ],
+   "final_params": {
+    "atr_mult": 2.5
+   },
+   "graduated": false
+  },
+  {
+   "name": "ratchet_rider",
+   "mean_excess_pct": -16.0,
+   "mean_ret_pct": -1.53,
+   "trades": 215,
+   "folds_won": "3/10",
+   "per_fold": [
+    {
+     "fold": 1,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.738500922238141,
+     "ret": 0.0012496763325116067,
+     "trades": 31
+    },
+    {
+     "fold": 2,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.22479802761998086,
+     "ret": -0.12601540405437972,
+     "trades": 30
+    },
+    {
+     "fold": 3,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": 0.4225157347892628,
+     "ret": 0.010065004611567063,
+     "trades": 21
+    },
+    {
+     "fold": 4,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.0649148458368598,
+     "ret": 0.09545431135771032,
+     "trades": 25
+    },
+    {
+     "fold": 5,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.04265915267660059,
+     "ret": 0.07910397067249364,
+     "trades": 8
+    },
+    {
+     "fold": 6,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.8722617557170124,
+     "ret": -0.05782931936546293,
+     "trades": 26
+    },
+    {
+     "fold": 7,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.3881390630805381,
+     "ret": 0.003881225561049695,
+     "trades": 23
+    },
+    {
+     "fold": 8,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": 0.15750305927299807,
+     "ret": -0.00958288860725931,
+     "trades": 20
+    },
+    {
+     "fold": 9,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": -0.08987711934491172,
+     "ret": -0.06423718936152217,
+     "trades": 15
+    },
+    {
+     "fold": 10,
+     "params": {
+      "surge_pct": 0.06,
+      "trail_mult": 3.0
+     },
+     "excess": 0.2408630378940338,
+     "ret": -0.08551037149865887,
+     "trades": 16
+    }
+   ],
+   "final_params": {
+    "surge_pct": 0.06,
+    "trail_mult": 3.0
+   },
+   "graduated": false
+  }
+ ]
+}
