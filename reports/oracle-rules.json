@@ -1,0 +1,48 @@
+{
+ "generated": "2026-08-16 02:40 UTC",
+ "n_oracle_trades": 5836,
+ "rules": {
+  "mom_40": {
+   "oracle_median": 0.0323,
+   "random_median": -0.0218,
+   "q25": -0.0987,
+   "q75": 0.219
+  },
+  "mom_90d_pctile": {
+   "oracle_median": 0.5365,
+   "random_median": 0.5,
+   "q25": 0.3744,
+   "q75": 0.8807
+  },
+  "rsi14": {
+   "oracle_median": 49.4064,
+   "random_median": 47.3512,
+   "q25": 40.748,
+   "q75": 57.8931
+  },
+  "atr_pct": {
+   "oracle_median": 0.0611,
+   "random_median": 0.0327,
+   "q25": 0.0424,
+   "q75": 0.0914
+  },
+  "atr_pctile_90d": {
+   "oracle_median": 0.7591,
+   "random_median": 0.4352,
+   "q25": 0.5,
+   "q75": 0.9389
+  },
+  "dd_from_high": {
+   "oracle_median": -0.6213,
+   "random_median": -0.7074,
+   "q25": -0.7996,
+   "q75": -0.3124
+  },
+  "surge_12": {
+   "oracle_median": 0.0,
+   "random_median": -0.0068,
+   "q25": -0.0678,
+   "q75": 0.1087
+  }
+ }
+}

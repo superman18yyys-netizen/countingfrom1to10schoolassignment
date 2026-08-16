@@ -74,14 +74,14 @@ def simulate_path(closes: Dict[str, pd.Series], path: List[Trade],
         assert holding is None, "path buys while already holding"
         fill = t.buy_px * (1.0 + SLIP)
         spend = cash / (1.0 + FEE)
-        fee = spend * FEE
+        fee = spend * FEE if math.isfinite(spend) else 0.0
         qty = spend / fill
         cash = 0.0
         holding = t.pair
         # SELL: must own this coin; proceeds pay fee+slippage
         out_fill = t.sell_px * (1.0 - SLIP)
         gross = qty * out_fill
-        fee2 = gross * FEE
+        fee2 = gross * FEE if math.isfinite(gross) else 0.0
         cash = gross - fee2
         holding = None
         last_ts = t.sell_ts
@@ -172,15 +172,16 @@ def build_segments(closes: Dict[str, pd.Series],
 
 
 def optimal_path(segs: List[Trade]) -> Tuple[List[Trade], float]:
-    """DP: best compounding chain. O(n log n)."""
+    """DP: best compounding chain. O(n log n). Uses longdouble — the
+    optimal chain on 394 coins can exceed float64's exp range."""
     print(f"[optimal] DP over {len(segs):,} segments...", flush=True)
     segs.sort(key=lambda t: t.sell_ts)
     ends = [t.sell_ts for t in segs]
     starts = [t.buy_ts for t in segs]
     n = len(segs)
-    dp = np.zeros(n)
+    dp = np.zeros(n, dtype=np.longdouble)
     parent = [-1] * n
-    best_end = np.zeros(n)          # best value among segments ending <= i
+    best_end = np.zeros(n, dtype=np.longdouble)
     best_par = [-1] * n
     for i in range(n):
         # last segment that ends before this one starts
@@ -196,13 +197,17 @@ def optimal_path(segs: List[Trade]) -> Tuple[List[Trade], float]:
         else:
             best_end[i] = best_end[i - 1]
             best_par[i] = best_par[i - 1]
-    # reconstruct
     path, cur = [], int(best_par[n - 1]) if n else -1
     while cur >= 0:
         path.append(segs[cur])
         cur = parent[cur]
     path.reverse()
-    return path, math.exp(best_end[n - 1]) if n else 1.0
+    total_log = best_end[n - 1] if n else np.longdouble(0)
+    try:
+        equity = float(np.exp(total_log))
+    except (OverflowError, FloatingPointError):
+        equity = float("inf")
+    return path, equity, float(total_log)
 
 
 def main() -> None:
@@ -220,21 +225,25 @@ def main() -> None:
     segs = build_segments(closes, total=len(closes))
     print(f"[optimal] {len(segs):,} profitable segments "
           f"({time.time() - t0:.1f}s)")
-    path, equity = optimal_path(segs)
+    path, equity, total_log = optimal_path(segs)
     print(f"[optimal] path found: {len(path)} trades "
           f"({time.time() - t0:.1f}s total)")
 
     # EXPLICIT DAY-BY-DAY SIMULATION: prove the path is executable
     # with real cash/holdings/fees, and get the true realized equity
     ledger, sim_equity = simulate_path(closes, path, capital=100.0)
-    drift = abs(sim_equity - 100.0 * equity) / max(sim_equity, 1e-9)
-    print(f"[optimal] DP predicts ${100 * equity:,.2f}; explicit "
-          f"simulation realizes ${sim_equity:,.2f} "
-          f"(drift {drift * 100:.4f}% = idle-cash yield)")
-
+    if math.isfinite(sim_equity) and math.isfinite(equity):
+        drift = abs(sim_equity - 100.0 * equity) / max(sim_equity, 1e-9)
+        print(f"[optimal] DP predicts ${100 * equity:,.2f}; explicit "
+              f"simulation realizes ${sim_equity:,.2f} "
+              f"(drift {drift * 100:.4f}% = idle-cash yield)")
+    else:
+        print(f"[optimal] equity exceeds float64 range: log-sum "
+              f"{total_log:.1f} = 10^{total_log * 0.4343:.0f}")
     cap = 100.0
-    print(f"\n== OPTIMAL PATH: ${cap:.0f} -> ${sim_equity:,.2f} "
-          f"({(sim_equity / cap - 1) * 100:+,.0f}%) in {len(path)} trades "
+    disp = (f"${sim_equity:,.2f}" if math.isfinite(sim_equity)
+            else f"10^{total_log * 0.4343:.0f}")
+    print(f"\n== OPTIMAL PATH: ${cap:.0f} -> {disp} in {len(path)} trades "
           f"(day-by-day simulated, fees+slippage on every fill) ==\n")
     for row in ledger[:40]:
         d0 = datetime.fromtimestamp(row["buy_ts"], tz=timezone.utc)
@@ -250,14 +259,16 @@ def main() -> None:
     out = {"generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
            "coins": sorted(closes), "segments_total": len(segs),
            "trades_taken": len(path),
-           "dp_multiplier": equity,
-           "simulated_equity_from_100": round(sim_equity, 2),
+           "dp_multiplier": equity if math.isfinite(equity) else None,
+           "log_sum": round(total_log, 2),
+           "simulated_equity_from_100":
+               round(sim_equity, 2) if math.isfinite(sim_equity) else None,
            "ledger": ledger}
     os.makedirs("reports", exist_ok=True)
     with open("reports/optimal-path.json", "w") as fh:
         json.dump(out, fh, indent=1)
     print(f"\n[optimal] -> reports/optimal-path.json")
-    print(f"[optimal] final equity from $100: ${sim_equity:,.2f}")
+    print(f"[optimal] final equity from $100: {disp}")
 
 
 if __name__ == "__main__":

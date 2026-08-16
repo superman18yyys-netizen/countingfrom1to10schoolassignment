@@ -123,16 +123,26 @@ class A000Config:
     trade_from: int = 0           # timeline position where trading may
     trade_to: int = 10**9         # begin/end (walk-forward spans;
                                   # features always use full history)
-    core_frac: float = 0.65       # core-satellite: fraction of the
+    core_frac: float = 0.85       # core-satellite: fraction of the
                                   # budget always held in BTC+ETH
                                   # (0 = pure rotation). Core sells only
                                   # when its own momentum turns negative.
+                                  # 0.85 = champion config on the full
+                                  # 394-coin universe (+364%, 54% dd).
     core_pairs: tuple = ("BTC-USDC", "ETH-USDC")
     oracle_filter: bool = True    # entry filter mined from the optimal
-                                  # path (reports/oracle-rules.json):
-                                  # mom_40 >= 0, atr_pctile >= 0.40,
-                                  # rsi14 in [30, 65], dd > -0.75,
-                                  # micro-pullback not surge-chase
+                                  # path over 394 coins (q25/q75 of the
+                                  # oracle buys, reports/oracle-rules.json):
+                                  # mom_40 >= -0.10, atr_pctile >= 0.50,
+                                  # rsi14 in [40, 58], dd > -0.80,
+                                  # atr_pct >= 0.04
+    min_bars: int = 1000          # liquidity screen: satellites need
+                                  # >= this much history (skips listing
+                                  # pumps and dead coins)
+    vol_floor_pctl: float = 0.90  # satellites must be in the top 10%
+                                  # of universe volume (the tradeable
+                                  # majors — 394 coins include many
+                                  # with volumes too thin to trade)
 
 
 @dataclass
@@ -148,12 +158,22 @@ class A000Result:
 def run_a000(closes: Dict[str, pd.Series],
              highs: Dict[str, pd.Series],
              lows: Dict[str, pd.Series],
-             cfg: Optional[A000Config] = None) -> A000Result:
+             cfg: Optional[A000Config] = None,
+             volumes: Optional[Dict[str, pd.Series]] = None) -> A000Result:
     cfg = cfg or A000Config()
     pairs = sorted(closes)
     # align index: union of timestamps
     idx_all = sorted(set().union(*[set(c.index) for c in closes.values()]))
     timeline = pd.DatetimeIndex(idx_all)
+
+    # liquidity screen: median recent volume per coin + universe floor
+    liq: Dict[str, float] = {}
+    if volumes:
+        meds = {p: float(v.tail(1000).median()) for p, v in volumes.items()
+                if len(v) > 0 and v.tail(1000).notna().any()}
+        if meds:
+            floor = np.percentile(list(meds.values()), cfg.vol_floor_pctl * 100)
+            liq = {p: m for p, m in meds.items() if m >= floor}
 
     # feature memoization: keyed on data identity + mom_bars (the only
     # feature that depends on cfg besides vol_period)
@@ -268,17 +288,24 @@ def run_a000(closes: Dict[str, pd.Series],
         for s, pair in scored:
             if s <= 0:
                 continue
-            if cfg.oracle_filter and pair not in cfg.core_pairs:
-                m40 = mom40[pair].loc[t]
-                r14 = rsi14[pair].loc[t]
-                ap = atr_pctl[pair].loc[t]
-                dd = dd1y[pair].loc[t]
-                ok = (m40 == m40 and m40 >= 0.0
-                      and r14 == r14 and 30.0 <= r14 <= 65.0
-                      and ap == ap and ap >= 0.40
-                      and dd == dd and dd > -0.75)
-                if not ok:
+            if pair not in cfg.core_pairs:
+                if len(closes[pair]) < cfg.min_bars:
                     continue
+                if liq and pair not in liq:
+                    continue
+                if cfg.oracle_filter:
+                    m40 = mom40[pair].loc[t]
+                    r14 = rsi14[pair].loc[t]
+                    ap = atr_pctl[pair].loc[t]
+                    a_now = vol[pair].loc[t]
+                    dd = dd1y[pair].loc[t]
+                    ok = (m40 == m40 and m40 >= -0.10
+                          and r14 == r14 and 40.0 <= r14 <= 58.0
+                          and ap == ap and ap >= 0.50
+                          and a_now == a_now and a_now >= 0.04
+                          and dd == dd and dd > -0.80)
+                    if not ok:
+                        continue
             buyable.append((s, pair))
 
         # risk-parity target weights: core (BTC/ETH anchor) + satellite

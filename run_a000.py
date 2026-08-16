@@ -29,10 +29,10 @@ from bot.data.store import Store  # noqa: E402
 PURGE_BARS = 200
 MIN_TRAIN = 1500
 LONG_BARS = 1900     # pairs with >= this join the walk-forward tuning
-GRID = {"core_frac": [0.50, 0.65],
+GRID = {"core_frac": [0.65, 0.80, 0.85],
         "top_k": [4, 6],
         "cash_buffer": [0.25],
-        "swap_margin": [0.02]}   # 4 trials (core-satellite family)
+        "swap_margin": [0.02]}   # 6 trials (core-satellite family)
 
 
 def main() -> None:
@@ -80,6 +80,7 @@ def main() -> None:
     lcloses = {p: long_data[p]["close"] for p in long_pairs}
     lhighs = {p: long_data[p]["high"] for p in long_pairs}
     llows = {p: long_data[p]["low"] for p in long_pairs}
+    lvols = {p: long_data[p]["volume"] for p in long_pairs}
     fold_rows = []
     # timeline positions: common window is the last n_common bars of
     # the union timeline; fold spans slice it
@@ -96,13 +97,13 @@ def main() -> None:
         for combo in trials:
             cfg = A000Config(capital=args.capital, **combo,
                              trade_from=base, trade_to=base + tr_end)
-            r = run_a000(lcloses, lhighs, llows, cfg)
+            r = run_a000(lcloses, lhighs, llows, cfg, volumes=lvols)
             if r.return_pct > best_sh:
                 best_sh, best = r.return_pct, combo
         cfg = A000Config(capital=args.capital, **best,
                          trade_from=base + te - fold_len,
                          trade_to=base + te)
-        r = run_a000(lcloses, lhighs, llows, cfg)
+        r = run_a000(lcloses, lhighs, llows, cfg, volumes=lvols)
         fold_rows.append({"fold": k + 1, "params": best,
                           "ret_pct": round(r.return_pct, 2),
                           "dd_pct": round(r.max_dd_pct, 2),
@@ -116,8 +117,10 @@ def main() -> None:
     final_params = fold_rows[-1]["params"] if fold_rows else \
         {"core_frac": 0.65, "top_k": 4, "cash_buffer": 0.25,
          "swap_margin": 0.02}
+    vols_all = {p: all_data[p]['volume'] for p in pairs}
     full = run_a000(closes, highs, lows,
-                    A000Config(capital=args.capital, **final_params))
+                    A000Config(capital=args.capital, **final_params),
+                    volumes=vols_all)
 
     # benchmarks
     btc = closes.get("BTC-USDC")
