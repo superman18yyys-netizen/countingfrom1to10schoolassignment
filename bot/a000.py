@@ -34,6 +34,12 @@ CASH_YIELD = 0.045
 SLIP = 0.001
 FEE = 0.006
 
+# feature memoization: features are pure functions of the data; the
+# walk-forward loop re-runs run_a000 with the same data and only
+# different trade windows — recomputing 200 coins x 8 rolling features
+# per trial would take hours. Keyed on the identity of the input dicts.
+_FEAT_CACHE: dict = {}
+
 
 # ---------------------------------------------------------------- oracle
 def oracle_return(closes: Dict[str, pd.Series], capital: float = 100.0) -> dict:
@@ -149,40 +155,42 @@ def run_a000(closes: Dict[str, pd.Series],
     idx_all = sorted(set().union(*[set(c.index) for c in closes.values()]))
     timeline = pd.DatetimeIndex(idx_all)
 
-    # precompute per-pair risk-adjusted momentum on each pair's frame
-    mom = {}
-    vol = {}
-    for pair in pairs:
-        close = closes[pair]
-        m = close / close.shift(cfg.mom_bars) - 1.0     # raw momentum
-        r = close.pct_change()
-        v = r.rolling(cfg.mom_bars).std(ddof=0)
-        mom[pair] = (m / v.replace(0.0, np.nan)).reindex(timeline).ffill()
-        a = atr(highs[pair], lows[pair], close, cfg.vol_period) / close
-        vol[pair] = a.reindex(timeline).ffill()
-
-    sma200 = {p: sma(closes[p], 200).reindex(timeline).ffill()
-              for p in pairs}
-
-    # oracle-rule features (precomputed, reindexed to the timeline)
-    mom40: Dict[str, pd.Series] = {}
-    rsi14: Dict[str, pd.Series] = {}
-    atr_pctl: Dict[str, pd.Series] = {}
-    surge12: Dict[str, pd.Series] = {}
-    dd1y: Dict[str, pd.Series] = {}
-    for pair in pairs:
-        close = closes[pair]
-        mom40[pair] = (close / close.shift(40) - 1.0) \
-            .reindex(timeline).ffill()
-        rsi14[pair] = rsi(close, 14).reindex(timeline).ffill()
-        a = atr(highs[pair], lows[pair], close, 14) / close
-        atr_pctl[pair] = a.rolling(540, min_periods=100).apply(
-            lambda v: (v <= v[-1]).mean(), raw=True) \
-            .reindex(timeline).ffill()
-        surge12[pair] = (close / close.shift(12) - 1.0) \
-            .reindex(timeline).ffill()
-        dd1y[pair] = (close / close.rolling(2160, min_periods=100).max()
-                      - 1.0).reindex(timeline).ffill()
+    # feature memoization: keyed on data identity + mom_bars (the only
+    # feature that depends on cfg besides vol_period)
+    ckey = (tuple(id(closes[p]) for p in pairs), cfg.mom_bars)
+    if ckey in _FEAT_CACHE:
+        (mom, vol, sma200, mom40, rsi14, atr_pctl, surge12,
+         dd1y, timeline_c) = _FEAT_CACHE[ckey]
+    else:
+        # precompute per-pair risk-adjusted momentum on each frame
+        mom, vol = {}, {}
+        for pair in pairs:
+            close = closes[pair]
+            m = close / close.shift(cfg.mom_bars) - 1.0
+            r = close.pct_change()
+            v = r.rolling(cfg.mom_bars).std(ddof=0)
+            mom[pair] = (m / v.replace(0.0, np.nan)) \
+                .reindex(timeline).ffill()
+            a = atr(highs[pair], lows[pair], close, cfg.vol_period) / close
+            vol[pair] = a.reindex(timeline).ffill()
+        sma200 = {p: sma(closes[p], 200).reindex(timeline).ffill()
+                  for p in pairs}
+        mom40, rsi14, atr_pctl, surge12, dd1y = {}, {}, {}, {}, {}
+        for pair in pairs:
+            close = closes[pair]
+            mom40[pair] = (close / close.shift(40) - 1.0) \
+                .reindex(timeline).ffill()
+            rsi14[pair] = rsi(close, 14).reindex(timeline).ffill()
+            a = atr(highs[pair], lows[pair], close, 14) / close
+            atr_pctl[pair] = a.rolling(540, min_periods=100).apply(
+                lambda v: (v <= v[-1]).mean(), raw=True) \
+                .reindex(timeline).ffill()
+            surge12[pair] = (close / close.shift(12) - 1.0) \
+                .reindex(timeline).ffill()
+            dd1y[pair] = (close / close.rolling(2160, min_periods=100).max()
+                          - 1.0).reindex(timeline).ffill()
+        _FEAT_CACHE[ckey] = (mom, vol, sma200, mom40, rsi14,
+                             atr_pctl, surge12, dd1y, timeline)
 
     cash = cfg.capital
     holdings: Dict[str, float] = {}    # pair -> qty

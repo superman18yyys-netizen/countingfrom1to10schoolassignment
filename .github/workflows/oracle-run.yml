@@ -1,0 +1,72 @@
+name: oracle-run
+
+# The full mechanical pipeline, run on GitHub servers:
+#   1. fetch EVERY USDC pair Coinbase lists (6y 4H, backward paging)
+#   2. oracle_optimal.py  — DP over all coins: the mechanically
+#      calculated best path ($100 -> ?), replayed day-by-day with
+#      real cash/holdings/fees, full trade ledger saved
+#   3. mine_oracle_rules.py — extract the observable entry rules from
+#      the optimal path for A-000
+#   4. run_a000.py — the full-period report with the mined rules
+#   5. commit everything to reports/
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: pip install -r requirements-swarm.txt
+      - name: Fetch full universe
+        run: python fetch_universe.py
+      - name: Upload universe database
+        uses: actions/upload-artifact@v4
+        with:
+          name: universe-data
+          path: data/universe.db
+          retention-days: 7
+
+  analyze:
+    needs: fetch
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: pip install -r requirements-swarm.txt
+      - name: Install libomp (LightGBM on ubuntu)
+        run: sudo apt-get update && sudo apt-get install -y libomp-dev
+      - name: Download universe database
+        uses: actions/download-artifact@v4
+        with:
+          name: universe-data
+          path: data
+      - name: Optimal path (mechanical perfect run)
+        run: python oracle_optimal.py
+      - name: Mine rules from the optimal path
+        run: python mine_oracle_rules.py
+      - name: A-000 full-period report with mined rules
+        run: python run_a000.py --db data/universe.db --folds 6 --capital 100
+      - name: Commit reports
+        run: |
+          git config user.name "oracle-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add reports/ || true
+          git commit -m "oracle: optimal path + rules + A-000 report $(date -u +%Y-%m-%d)" || echo "nothing to commit"
+          git push
