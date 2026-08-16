@@ -30,9 +30,9 @@ PURGE_BARS = 200
 MIN_TRAIN = 1500
 LONG_BARS = 1900     # pairs with >= this join the walk-forward tuning
 GRID = {"core_frac": [0.50, 0.65],
-        "top_k": [3, 4, 6],
+        "top_k": [4, 6],
         "cash_buffer": [0.25],
-        "swap_margin": [0.02]}   # 6 trials (core-satellite family)
+        "swap_margin": [0.02]}   # 4 trials (core-satellite family)
 
 
 def main() -> None:
@@ -86,6 +86,8 @@ def main() -> None:
     base = len(sorted(set().union(*[set(d.index) for d in long_data.values()]))) \
         - n_common
     for k in range(args.folds):
+        import time as _t
+        _t0 = _t.time()
         te = n_common - (args.folds - 1 - k) * fold_len
         tr_end = te - fold_len - PURGE_BARS
         if tr_end <= MIN_TRAIN:
@@ -106,7 +108,9 @@ def main() -> None:
                           "dd_pct": round(r.max_dd_pct, 2),
                           "trades": r.trades})
         print(f"  fold {k + 1:2d}: {best} ret={r.return_pct:+8.1f}% "
-              f"dd={r.max_dd_pct:.1f}% trades={r.trades}")
+              f"dd={r.max_dd_pct:.1f}% trades={r.trades} "
+              f"({_t.time() - _t0:.0f}s, {args.folds - k - 1} folds left)",
+              flush=True)
 
     # ---------- 3. FULL-PERIOD REPORT (ENTIRE universe) ---------------
     final_params = fold_rows[-1]["params"] if fold_rows else \

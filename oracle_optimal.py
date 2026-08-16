@@ -27,6 +27,7 @@ import json
 import math
 import os
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
@@ -63,7 +64,7 @@ def simulate_path(closes: Dict[str, pd.Series], path: List[Trade],
     qty = 0.0
     last_ts = 0
     ledger: List[dict] = []
-    for t in path:
+    for n, t in enumerate(path):
         # idle cash yield between trades
         if last_ts:
             years = (t.buy_ts - last_ts) / 31536000.0
@@ -94,6 +95,9 @@ def simulate_path(closes: Dict[str, pd.Series], path: List[Trade],
             "gross_ret_pct": round((t.sell_px / t.buy_px - 1) * 100, 3),
             "net_ret_pct": round(t.net * 100, 3),
         })
+        if (n + 1) % 500 == 0:
+            print(f"[optimal] simulation: {n + 1}/{len(path)} trades "
+                  f"replayed, equity ${cash:,.2f}", flush=True)
     return ledger, cash
 
 
@@ -135,8 +139,11 @@ def _zigzag(close: np.ndarray, pct: float) -> List[Tuple[int, float, str]]:
     return piv
 
 
-def build_segments(closes: Dict[str, pd.Series]) -> List[Trade]:
+def build_segments(closes: Dict[str, pd.Series],
+                   total: Optional[int] = None) -> List[Trade]:
     segs: List[Trade] = []
+    total = total or len(closes)
+    done = 0
     for pair, close in closes.items():
         c = close.to_numpy()
         idx = close.index
@@ -157,11 +164,16 @@ def build_segments(closes: Dict[str, pd.Series]) -> List[Trade]:
                         net=net, logr=math.log1p(net),
                         buy_px=buy_p, sell_px=p))
                 pending = None
+        done += 1
+        if done % 50 == 0 or done == total:
+            print(f"[optimal] segments: {done}/{total} coins done, "
+                  f"{len(segs)} profitable segments so far", flush=True)
     return segs
 
 
 def optimal_path(segs: List[Trade]) -> Tuple[List[Trade], float]:
     """DP: best compounding chain. O(n log n)."""
+    print(f"[optimal] DP over {len(segs):,} segments...", flush=True)
     segs.sort(key=lambda t: t.sell_ts)
     ends = [t.sell_ts for t in segs]
     starts = [t.buy_ts for t in segs]
@@ -204,9 +216,13 @@ def main() -> None:
             closes[pair] = df["close"].dropna()
 
     print(f"[optimal] {len(closes)} coins, building segments...")
-    segs = build_segments(closes)
-    print(f"[optimal] {len(segs)} profitable segments")
+    t0 = time.time()
+    segs = build_segments(closes, total=len(closes))
+    print(f"[optimal] {len(segs):,} profitable segments "
+          f"({time.time() - t0:.1f}s)")
     path, equity = optimal_path(segs)
+    print(f"[optimal] path found: {len(path)} trades "
+          f"({time.time() - t0:.1f}s total)")
 
     # EXPLICIT DAY-BY-DAY SIMULATION: prove the path is executable
     # with real cash/holdings/fees, and get the true realized equity
@@ -214,7 +230,7 @@ def main() -> None:
     drift = abs(sim_equity - 100.0 * equity) / max(sim_equity, 1e-9)
     print(f"[optimal] DP predicts ${100 * equity:,.2f}; explicit "
           f"simulation realizes ${sim_equity:,.2f} "
-          f"(drift {drift * 100:.4f}%)")
+          f"(drift {drift * 100:.4f}% = idle-cash yield)")
 
     cap = 100.0
     print(f"\n== OPTIMAL PATH: ${cap:.0f} -> ${sim_equity:,.2f} "

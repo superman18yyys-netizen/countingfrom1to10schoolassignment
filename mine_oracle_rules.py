@@ -88,17 +88,26 @@ def main() -> None:
 
     store = Store("data/universe.db")
     frames = {}
-    for pair in [r[0] for r in store.conn.execute(
-            "SELECT DISTINCT pair FROM candles WHERE granularity='FOUR_HOUR'")]:
+    pair_list = [r[0] for r in store.conn.execute(
+        "SELECT DISTINCT pair FROM candles WHERE granularity='FOUR_HOUR'")]
+    total = len(pair_list)
+    done = 0
+    for pair in pair_list:
         df = store.load_candles(pair, "FOUR_HOUR")
         if df is not None and len(df) >= 400:
             frames[pair] = df.dropna()
+        done += 1
+        if done % 50 == 0 or done == total:
+            print(f"[rule-mine] frames: {done}/{total} coins loaded "
+                  f"({len(frames)} usable)", flush=True)
 
     # oracle feature vectors + random baseline
     oracle_f = {k: [] for k in RULES}
     rand_f = {k: [] for k in RULES}
     rng = np.random.default_rng(7)
-    for t in path["ledger"]:
+    print(f"[rule-mine] computing features for "
+          f"{len(path['ledger'])} oracle buys...", flush=True)
+    for n, t in enumerate(path["ledger"]):
         df = frames.get(t["pair"])
         if df is None:
             continue
@@ -111,6 +120,9 @@ def main() -> None:
         j = int(rng.integers(100, len(df) - 100))
         for k, fn in RULES.items():
             rand_f[k].append(fn(df, j))
+        if (n + 1) % 500 == 0:
+            print(f"[rule-mine] {n + 1}/{len(path['ledger'])} buys "
+                  f"processed", flush=True)
 
     print(f"== RULE MINING: {len(oracle_f['mom_40'])} oracle buys vs "
           f"random bars ==\n")

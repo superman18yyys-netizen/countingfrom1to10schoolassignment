@@ -62,7 +62,7 @@ jobs:
       - name: Mine rules from the optimal path
         run: python mine_oracle_rules.py
       - name: A-000 full-period report with mined rules
-        run: python run_a000.py --db data/universe.db --folds 6 --capital 100
+        run: python run_a000.py --db data/universe.db --folds 4 --capital 100
       - name: Commit reports
         run: |
           git config user.name "oracle-bot"
