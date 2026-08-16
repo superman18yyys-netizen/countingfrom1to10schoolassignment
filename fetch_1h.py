@@ -27,7 +27,7 @@ def main() -> None:
             "WHERE granularity='FOUR_HOUR'")]:
         df = u4.load_candles(pair, "FOUR_HOUR")
         if df is not None and len(df) >= 1000:
-            v = df["volume"].tail(1000).median()
+            v = (df["volume"] * df["close"]).tail(1000).median()
             if v == v:
                 vols[pair] = float(v)
     pairs = sorted(vols, key=lambda p: -vols[p])[:TOP_N]
