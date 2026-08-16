@@ -28,9 +28,10 @@ from bot.data.store import Store  # noqa: E402
 
 PURGE_BARS = 200
 MIN_TRAIN = 1500
-GRID = {"top_k": [3, 4, 5],
-        "cash_buffer": [0.15, 0.25, 0.35],
-        "swap_margin": [0.005, 0.010, 0.020]}   # 27 trials
+GRID = {"core_frac": [0.50, 0.65],
+        "top_k": [3, 4],
+        "cash_buffer": [0.25],
+        "swap_margin": [0.02]}   # 4 trials (core-satellite family)
 
 
 def load(store, path):
@@ -64,10 +65,12 @@ def main() -> None:
     print(f"[a000] universe: {len(pairs)} coins | "
           f"{', '.join(p[:p.index('-')] for p in pairs)}")
     print(f"[a000] min history: {n_common} bars "
-          f"({n_common * 4 / 365:.1f} years)\n")
+          f"({n_common / 2190:.1f} years)\n")
 
     # ---------- 1. ORACLE ----------
     closes = {p: data[p]["close"] for p in pairs}
+    highs = {p: data[p]["high"] for p in pairs}
+    lows = {p: data[p]["low"] for p in pairs}
     o = oracle_return(closes, capital=args.capital)
     print(f"== ORACLE ceiling (perfect foresight, optimal sizing) ==")
     print(f"   ${args.capital:.0f} -> ${o['equity']:,.2f}  "
@@ -78,6 +81,9 @@ def main() -> None:
     trials = [dict(zip(GRID, v)) for v in itertools.product(*GRID.values())]
     print(f"== A-000 walk-forward ({len(trials)} trials x {args.folds} folds) ==")
     fold_rows = []
+    t0 = 0                      # timeline positions: common window is
+    # the last n_common bars of the union timeline; fold spans slice it
+    base = len(sorted(set().union(*[set(d.index) for d in data.values()]))) - n_common
     for k in range(args.folds):
         te = n_common - (args.folds - 1 - k) * fold_len
         tr_end = te - fold_len - PURGE_BARS
@@ -85,20 +91,15 @@ def main() -> None:
             continue
         best_sh, best = -1e9, None
         for combo in trials:
-            subs = {p: d.iloc[len(d) - n_common:tr_end]
-                    for p, d in data.items()}
-            cfg = A000Config(capital=args.capital, **combo)
-            r = run_a000({p: s["close"] for p, s in subs.items()},
-                         {p: s["high"] for p, s in subs.items()},
-                         {p: s["low"] for p, s in subs.items()}, cfg)
+            cfg = A000Config(capital=args.capital, **combo,
+                             trade_from=base, trade_to=base + tr_end)
+            r = run_a000(closes, highs, lows, cfg)
             if r.return_pct > best_sh:
                 best_sh, best = r.return_pct, combo
-        subs = {p: d.iloc[len(d) - n_common + te - fold_len:te]
-                for p, d in data.items()}
-        r = run_a000({p: s["close"] for p, s in subs.items()},
-                     {p: s["high"] for p, s in subs.items()},
-                     {p: s["low"] for p, s in subs.items()},
-                     A000Config(capital=args.capital, **best))
+        cfg = A000Config(capital=args.capital, **best,
+                         trade_from=base + te - fold_len,
+                         trade_to=base + te)
+        r = run_a000(closes, highs, lows, cfg)
         fold_rows.append({"fold": k + 1, "params": best,
                           "ret_pct": round(r.return_pct, 2),
                           "dd_pct": round(r.max_dd_pct, 2),
@@ -122,7 +123,7 @@ def main() -> None:
         if c is not None:
             bh[name] = round((c.iloc[-1] / c.iloc[0] - 1) * 100, 1)
     best_coin = max((c.iloc[-1] / c.iloc[0] for c in closes.values()))
-    cash_ret = ((1 + 0.045) ** (n_common * 4 / 365) - 1) * 100
+    cash_ret = ((1 + 0.045) ** (n_common / 2190) - 1) * 100
 
     print(f"\n== FULL 6Y REPORT (${args.capital:.0f} start, fees + "
           f"slip on, final params {final_params}) ==")

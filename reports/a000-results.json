@@ -1,0 +1,161 @@
+{
+ "generated": "2026-08-16 01:52 UTC",
+ "universe": [
+  "AAVE-USDC",
+  "ADA-USDC",
+  "APT-USDC",
+  "ARB-USDC",
+  "AVAX-USDC",
+  "BTC-USDC",
+  "DOGE-USDC",
+  "DOT-USDC",
+  "ETH-USDC",
+  "FET-USDC",
+  "LINK-USDC",
+  "LTC-USDC",
+  "NEAR-USDC",
+  "OP-USDC",
+  "SHIB-USDC",
+  "SOL-USDC",
+  "SUI-USDC",
+  "UNI-USDC",
+  "XRP-USDC"
+ ],
+ "capital": 100.0,
+ "oracle": {
+  "equity": 1.092181328490484e+31,
+  "trades": 371,
+  "return_pct": 1.092181328490484e+31
+ },
+ "fold_results": [
+  {
+   "fold": 2,
+   "params": {
+    "core_frac": 0.65,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": 15.41,
+   "dd_pct": 48.09,
+   "trades": 20
+  },
+  {
+   "fold": 3,
+   "params": {
+    "core_frac": 0.5,
+    "top_k": 3,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": -4.13,
+   "dd_pct": 56.11,
+   "trades": 31
+  },
+  {
+   "fold": 4,
+   "params": {
+    "core_frac": 0.5,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": -21.77,
+   "dd_pct": 42.18,
+   "trades": 34
+  },
+  {
+   "fold": 5,
+   "params": {
+    "core_frac": 0.5,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": -23.8,
+   "dd_pct": 48.6,
+   "trades": 13
+  },
+  {
+   "fold": 6,
+   "params": {
+    "core_frac": 0.65,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": -20.31,
+   "dd_pct": 52.9,
+   "trades": 28
+  },
+  {
+   "fold": 7,
+   "params": {
+    "core_frac": 0.5,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": -1.77,
+   "dd_pct": 28.63,
+   "trades": 26
+  },
+  {
+   "fold": 8,
+   "params": {
+    "core_frac": 0.65,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": 32.78,
+   "dd_pct": 0.0,
+   "trades": 0
+  },
+  {
+   "fold": 9,
+   "params": {
+    "core_frac": 0.65,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": 2.31,
+   "dd_pct": 24.93,
+   "trades": 13
+  },
+  {
+   "fold": 10,
+   "params": {
+    "core_frac": 0.65,
+    "top_k": 4,
+    "cash_buffer": 0.25,
+    "swap_margin": 0.02
+   },
+   "ret_pct": 7.22,
+   "dd_pct": 20.51,
+   "trades": 23
+  }
+ ],
+ "final_params": {
+  "core_frac": 0.65,
+  "top_k": 4,
+  "cash_buffer": 0.25,
+  "swap_margin": 0.02
+ },
+ "full_period": {
+  "equity": 412.49,
+  "return_pct": 312.49,
+  "max_dd_pct": 73.62,
+  "trades": 520,
+  "fees_paid": 59.05
+ },
+ "benchmarks": {
+  "buy_hold": {
+   "BTC": 691.6,
+   "ETH": 813.3
+  },
+  "best_coin_pct": 813.3,
+  "cash_yield_pct": 14.6
+ }
+}
