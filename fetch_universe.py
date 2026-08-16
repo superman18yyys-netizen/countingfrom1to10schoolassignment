@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Fetch the expanded USDC universe (6y 4H) for the A-000 lab."""
+"""Fetch the FULL USDC universe (6y 4H) for the A-000 lab.
+
+Every *-USDC product Coinbase lists — not a curated subset. Backward
+paging from today handles any listing date automatically. Pairs with
+less than MIN_BARS of history are discarded.
+"""
 from __future__ import annotations
 
 import sys
@@ -12,21 +17,15 @@ from bot.data.fetcher import (BASE_URL, GRANULARITY_SECONDS,
                               _parse_candles, list_products)
 from bot.data.store import Store
 
-UNIVERSE = [
-    "BTC-USDC", "ETH-USDC", "SOL-USDC", "DOGE-USDC", "XRP-USDC",
-    "ADA-USDC", "LTC-USDC", "LINK-USDC", "AVAX-USDC", "DOT-USDC",
-    "UNI-USDC", "AAVE-USDC", "MATIC-USDC", "SHIB-USDC", "OP-USDC",
-    "ARB-USDC", "NEAR-USDC", "APT-USDC", "SUI-USDC", "FET-USDC",
-]
+MIN_BARS = 400                # ~2.5 months of 4H — enough to matter
+DAYS = 2300
+GRAN = "FOUR_HOUR"
 
 
-def fetch_all_backward(pair: str, gran: str, end: datetime,
-                       days: int) -> pd.DataFrame:
-    """Page backward from `end` in 50-day steps until history runs out.
-    (Forward paging breaks on the FIRST empty page, which loses every
-    pair listed after the requested start date.)"""
+def fetch_all_backward(pair: str, end: datetime, days: int) -> pd.DataFrame:
+    """Page backward from `end` in ~58-day steps until history runs out."""
     import requests as _requests
-    step = timedelta(seconds=300 * GRANULARITY_SECONDS[gran])
+    step = timedelta(seconds=300 * GRANULARITY_SECONDS[GRAN])
     sess = _requests.Session()
     frames = []
     cur_end = end
@@ -35,7 +34,7 @@ def fetch_all_backward(pair: str, gran: str, end: datetime,
         cur_start = max(cur_end - step, stop)
         params = {"start": int(cur_start.timestamp()),
                   "end": int(cur_end.timestamp()),
-                  "granularity": gran}
+                  "granularity": GRAN}
         resp = sess.get(
             f"{BASE_URL}/market/products/{pair}/candles",
             params=params, timeout=30)
@@ -48,50 +47,45 @@ def fetch_all_backward(pair: str, gran: str, end: datetime,
             break                      # reached the listing date
         frames.append(page)
         cur_end = cur_start
-        time.sleep(0.12)
+        time.sleep(0.08)
     if not frames:
-                return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+        return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
     out = pd.concat(frames)
     out = out[~out.index.duplicated(keep="last")].sort_index()
     return out.astype(float)
 
 
 def main() -> None:
-    days = 2300
-    gran = "FOUR_HOUR"
     store = Store("data/universe.db")
     end = datetime.now(timezone.utc)
 
-    available = list_products("USDC")
-    ids = {p.get("product_id") or p.get("id") for p in available}
-    missing = [u for u in UNIVERSE if u not in ids]
-    if missing:
-        print(f"[universe] not listed on Coinbase: {missing}")
+    products = list_products("USDC")
+    pairs = sorted({p.get("product_id") or p.get("id") for p in products}
+                   - {None})
+    print(f"[universe] Coinbase lists {len(pairs)} USDC pairs; "
+          f"fetching all with {DAYS}d of history...")
 
-    for pair in UNIVERSE:
-        if pair not in ids:
-            continue
+    kept = 0
+    for pair in pairs:
         got = False
-        for attempt in range(4):
+        for attempt in range(3):
             try:
-                df = fetch_all_backward(pair, gran, end, days)
-                if not df.empty:
-                    store.upsert_candles(pair, gran, df)
-                    span_days = (df.index[-1] - df.index[0]).total_seconds() / 86400
+                df = fetch_all_backward(pair, end, DAYS)
+                if len(df) >= MIN_BARS:
+                    store.upsert_candles(pair, GRAN, df)
+                    kept += 1
+                    span = (df.index[-1] - df.index[0]).total_seconds() / 86400
                     print(f"[universe] {pair}: {len(df)} bars "
-                          f"({span_days:.0f}d)", flush=True)
-                else:
-                    print(f"[universe] {pair}: no history available",
-                          flush=True)
+                          f"({span:.0f}d)", flush=True)
                 got = True
                 break
             except Exception as exc:  # noqa: BLE001
                 print(f"[universe] {pair} attempt {attempt+1} failed: {exc}",
                       flush=True)
-                time.sleep(10 * (attempt + 1))
+                time.sleep(8 * (attempt + 1))
         if not got:
-            print(f"[universe] {pair}: SKIPPED (all attempts failed)",
-                  flush=True)
+            print(f"[universe] {pair}: SKIPPED", flush=True)
+    print(f"[universe] done: {kept} pairs with >= {MIN_BARS} bars kept")
 
 
 if __name__ == "__main__":

@@ -28,19 +28,11 @@ from bot.data.store import Store  # noqa: E402
 
 PURGE_BARS = 200
 MIN_TRAIN = 1500
+LONG_BARS = 1900     # pairs with >= this join the walk-forward tuning
 GRID = {"core_frac": [0.50, 0.65],
-        "top_k": [3, 4],
+        "top_k": [3, 4, 6],
         "cash_buffer": [0.25],
-        "swap_margin": [0.02]}   # 4 trials (core-satellite family)
-
-
-def load(store, path):
-    data = {}
-    for pair in store.pairs(path):
-        df = store.load_candles(pair, "FOUR_HOUR")
-        if df is not None and len(df) > MIN_TRAIN + 400:
-            data[pair] = df.dropna()
-    return data
+        "swap_margin": [0.02]}   # 6 trials (core-satellite family)
 
 
 def main() -> None:
@@ -51,39 +43,48 @@ def main() -> None:
     args = ap.parse_args()
 
     store = Store(args.db)
-    data = {}
+    all_data, long_data = {}, {}
     pair_list = [r[0] for r in store.conn.execute(
         "SELECT DISTINCT pair FROM candles WHERE granularity='FOUR_HOUR'")]
     for pair in pair_list:
         df = store.load_candles(pair, "FOUR_HOUR")
-        if df is not None and len(df) > MIN_TRAIN + 400:
-            data[pair] = df.dropna()
-    if not data:
+        if df is None or len(df) < 400:
+            continue
+        df = df.dropna()
+        all_data[pair] = df
+        if len(df) >= LONG_BARS:
+            long_data[pair] = df
+    if not all_data:
         sys.exit("[a000] no universe data")
-    pairs = sorted(data)
-    n_common = min(len(d) for d in data.values())
-    print(f"[a000] universe: {len(pairs)} coins | "
-          f"{', '.join(p[:p.index('-')] for p in pairs)}")
-    print(f"[a000] min history: {n_common} bars "
-          f"({n_common / 2190:.1f} years)\n")
+    pairs = sorted(all_data)
+    long_pairs = sorted(long_data)
+    n_common = min(len(d) for d in long_data.values())
+    print(f"[a000] universe: {len(pairs)} coins ({len(long_pairs)} with "
+          f"long history for tuning) | common: {n_common} bars "
+          f"({n_common / 2190:.1f}y)")
 
-    # ---------- 1. ORACLE ----------
-    closes = {p: data[p]["close"] for p in pairs}
-    highs = {p: data[p]["high"] for p in pairs}
-    lows = {p: data[p]["low"] for p in pairs}
+    # ---------- 1. ORACLE (full universe) ----------
+    closes = {p: all_data[p]["close"] for p in pairs}
+    highs = {p: all_data[p]["high"] for p in pairs}
+    lows = {p: all_data[p]["low"] for p in pairs}
     o = oracle_return(closes, capital=args.capital)
     print(f"== ORACLE ceiling (perfect foresight, optimal sizing) ==")
     print(f"   ${args.capital:.0f} -> ${o['equity']:,.2f}  "
           f"({o['return_pct']:+,.0f}%) in {o['trades']} trades\n")
 
-    # ---------- 2. WALK-FORWARD TUNING ----------
+    # ---------- 2. WALK-FORWARD TUNING (long-history pairs only) ------
     fold_len = (n_common - MIN_TRAIN) // args.folds
     trials = [dict(zip(GRID, v)) for v in itertools.product(*GRID.values())]
-    print(f"== A-000 walk-forward ({len(trials)} trials x {args.folds} folds) ==")
+    print(f"== A-000 walk-forward ({len(trials)} trials x {args.folds} "
+          f"folds, {len(long_pairs)} coins) ==")
+    lcloses = {p: long_data[p]["close"] for p in long_pairs}
+    lhighs = {p: long_data[p]["high"] for p in long_pairs}
+    llows = {p: long_data[p]["low"] for p in long_pairs}
     fold_rows = []
-    t0 = 0                      # timeline positions: common window is
-    # the last n_common bars of the union timeline; fold spans slice it
-    base = len(sorted(set().union(*[set(d.index) for d in data.values()]))) - n_common
+    # timeline positions: common window is the last n_common bars of
+    # the union timeline; fold spans slice it
+    base = len(sorted(set().union(*[set(d.index) for d in long_data.values()]))) \
+        - n_common
     for k in range(args.folds):
         te = n_common - (args.folds - 1 - k) * fold_len
         tr_end = te - fold_len - PURGE_BARS
@@ -93,13 +94,13 @@ def main() -> None:
         for combo in trials:
             cfg = A000Config(capital=args.capital, **combo,
                              trade_from=base, trade_to=base + tr_end)
-            r = run_a000(closes, highs, lows, cfg)
+            r = run_a000(lcloses, lhighs, llows, cfg)
             if r.return_pct > best_sh:
                 best_sh, best = r.return_pct, combo
         cfg = A000Config(capital=args.capital, **best,
                          trade_from=base + te - fold_len,
                          trade_to=base + te)
-        r = run_a000(closes, highs, lows, cfg)
+        r = run_a000(lcloses, lhighs, llows, cfg)
         fold_rows.append({"fold": k + 1, "params": best,
                           "ret_pct": round(r.return_pct, 2),
                           "dd_pct": round(r.max_dd_pct, 2),
@@ -107,12 +108,11 @@ def main() -> None:
         print(f"  fold {k + 1:2d}: {best} ret={r.return_pct:+8.1f}% "
               f"dd={r.max_dd_pct:.1f}% trades={r.trades}")
 
-    # ---------- 3. FULL-PERIOD REPORT ----------
+    # ---------- 3. FULL-PERIOD REPORT (ENTIRE universe) ---------------
     final_params = fold_rows[-1]["params"] if fold_rows else \
-        {"top_k": 4, "cash_buffer": 0.25, "swap_margin": 0.01}
-    full = run_a000(closes,
-                    {p: data[p]["high"] for p in pairs},
-                    {p: data[p]["low"] for p in pairs},
+        {"core_frac": 0.65, "top_k": 4, "cash_buffer": 0.25,
+         "swap_margin": 0.02}
+    full = run_a000(closes, highs, lows,
                     A000Config(capital=args.capital, **final_params))
 
     # benchmarks
@@ -122,8 +122,11 @@ def main() -> None:
     for name, c in (("BTC", btc), ("ETH", eth)):
         if c is not None:
             bh[name] = round((c.iloc[-1] / c.iloc[0] - 1) * 100, 1)
-    best_coin = max((c.iloc[-1] / c.iloc[0] for c in closes.values()))
-    cash_ret = ((1 + 0.045) ** (n_common / 2190) - 1) * 100
+    best_coin = max((c.iloc[-1] / c.iloc[0] for c in
+                     (long_data[p]["close"] for p in long_pairs)))
+    span_years = len(all_data.get("BTC-USDC", next(iter(all_data.values())))) \
+        / 2190
+    cash_ret = ((1 + 0.045) ** span_years - 1) * 100
 
     print(f"\n== FULL 6Y REPORT (${args.capital:.0f} start, fees + "
           f"slip on, final params {final_params}) ==")
