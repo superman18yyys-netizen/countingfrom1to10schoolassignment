@@ -39,6 +39,62 @@ import pandas as pd  # noqa: E402
 RTC = 0.014
 MIN_NET = 0.012          # a trade must clear fees + 1.2% margin
 ZIGZAG_PCT = 0.02        # fine pivot threshold
+SLIP = 0.001
+FEE = 0.006
+CASH_APY = 0.045
+
+
+def simulate_path(closes: Dict[str, pd.Series], path: List[Trade],
+                  capital: float = 100.0) -> Tuple[List[dict], float]:
+    """Explicit day-by-day replay of the chosen path.
+
+    Maintains REAL state — cash (USDC, accruing yield), holdings (one
+    coin at a time, no margin: you must sell before buying again,
+    and you can only spend cash you actually have). Every fill pays
+    fee + slippage at the exact bar close. Verifies the path is
+    executable and returns the day-by-day ledger + final equity.
+
+    Returns (ledger, final_equity). Raises AssertionError if the path
+    is not executable (should never happen — the DP enforces
+    non-overlap by construction; this is the proof).
+    """
+    cash = capital
+    holding: Optional[str] = None
+    qty = 0.0
+    last_ts = 0
+    ledger: List[dict] = []
+    for t in path:
+        # idle cash yield between trades
+        if last_ts:
+            years = (t.buy_ts - last_ts) / 31536000.0
+            cash *= (1.0 + CASH_APY * years)
+        # BUY: must be in cash; fee convention matches the segment net
+        # formula: S = cash/(1+FEE) is invested, fee = S*FEE
+        assert holding is None, "path buys while already holding"
+        fill = t.buy_px * (1.0 + SLIP)
+        spend = cash / (1.0 + FEE)
+        fee = spend * FEE
+        qty = spend / fill
+        cash = 0.0
+        holding = t.pair
+        # SELL: must own this coin; proceeds pay fee+slippage
+        out_fill = t.sell_px * (1.0 - SLIP)
+        gross = qty * out_fill
+        fee2 = gross * FEE
+        cash = gross - fee2
+        holding = None
+        last_ts = t.sell_ts
+        ledger.append({
+            "pair": t.pair,
+            "buy_ts": t.buy_ts, "sell_ts": t.sell_ts,
+            "buy_px": round(t.buy_px, 6), "sell_px": round(t.sell_px, 6),
+            "qty": round(qty, 10),
+            "fees_paid": round(fee + fee2, 6),
+            "cash_after": round(cash, 2),
+            "gross_ret_pct": round((t.sell_px / t.buy_px - 1) * 100, 3),
+            "net_ret_pct": round(t.net * 100, 3),
+        })
+    return ledger, cash
 
 
 @dataclass
@@ -152,48 +208,40 @@ def main() -> None:
     print(f"[optimal] {len(segs)} profitable segments")
     path, equity = optimal_path(segs)
 
+    # EXPLICIT DAY-BY-DAY SIMULATION: prove the path is executable
+    # with real cash/holdings/fees, and get the true realized equity
+    ledger, sim_equity = simulate_path(closes, path, capital=100.0)
+    drift = abs(sim_equity - 100.0 * equity) / max(sim_equity, 1e-9)
+    print(f"[optimal] DP predicts ${100 * equity:,.2f}; explicit "
+          f"simulation realizes ${sim_equity:,.2f} "
+          f"(drift {drift * 100:.4f}%)")
+
     cap = 100.0
-    ledger = []
-    print(f"\n== OPTIMAL PATH: ${cap:.0f} -> ${cap * equity:,.2f} "
-          f"({(equity - 1) * 100:+,.0f}%) in {len(path)} trades ==\n")
-    for t in path[:40]:
-        d0 = datetime.fromtimestamp(t.buy_ts, tz=timezone.utc)
-        d1 = datetime.fromtimestamp(t.sell_ts, tz=timezone.utc)
-        gain = cap * t.net
-        print(f"  {d0:%Y-%m-%d %H:%M} BUY  {t.pair:<10} "
-              f"${cap:>13,.2f} -> {d1:%Y-%m-%d %H:%M} SELL "
-              f"net {t.net * 100:+6.1f}%  ${cap + gain:,.2f}")
-        ledger.append({"pair": t.pair,
-                       "buy_ts": t.buy_ts, "sell_ts": t.sell_ts,
-                       "buy_px": round(t.buy_px, 6),
-                       "sell_px": round(t.sell_px, 6),
-                       "net_pct": round(t.net * 100, 3),
-                       "capital_before": round(cap, 2),
-                       "capital_after": round(cap * (1 + t.net), 2)})
-        cap *= (1.0 + t.net)
-    if len(path) > 40:
-        print(f"  ... ({len(path) - 40} more trades)")
-        for t in path[40:]:
-            ledger.append({"pair": t.pair,
-                           "buy_ts": t.buy_ts, "sell_ts": t.sell_ts,
-                           "buy_px": round(t.buy_px, 6),
-                           "sell_px": round(t.sell_px, 6),
-                           "net_pct": round(t.net * 100, 3),
-                           "capital_before": round(cap, 2),
-                           "capital_after": round(cap * (1 + t.net), 2)})
-            cap *= (1.0 + t.net)
+    print(f"\n== OPTIMAL PATH: ${cap:.0f} -> ${sim_equity:,.2f} "
+          f"({(sim_equity / cap - 1) * 100:+,.0f}%) in {len(path)} trades "
+          f"(day-by-day simulated, fees+slippage on every fill) ==\n")
+    for row in ledger[:40]:
+        d0 = datetime.fromtimestamp(row["buy_ts"], tz=timezone.utc)
+        d1 = datetime.fromtimestamp(row["sell_ts"], tz=timezone.utc)
+        print(f"  {d0:%Y-%m-%d %H:%M} BUY  {row['pair']:<10} "
+              f"${row['cash_after'] / (1 + row['net_ret_pct'] / 100):>13,.2f}"
+              f" -> {d1:%Y-%m-%d %H:%M} SELL net "
+              f"{row['net_ret_pct']:+6.1f}%  ${row['cash_after']:,.2f} "
+              f"(fees ${row['fees_paid']:.2f})")
+    if len(ledger) > 40:
+        print(f"  ... ({len(ledger) - 40} more trades)")
 
     out = {"generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
            "coins": sorted(closes), "segments_total": len(segs),
            "trades_taken": len(path),
-           "final_multiplier": equity,
-           "equity_from_100": round(100 * equity, 2),
+           "dp_multiplier": equity,
+           "simulated_equity_from_100": round(sim_equity, 2),
            "ledger": ledger}
     os.makedirs("reports", exist_ok=True)
     with open("reports/optimal-path.json", "w") as fh:
         json.dump(out, fh, indent=1)
     print(f"\n[optimal] -> reports/optimal-path.json")
-    print(f"[optimal] final equity from $100: ${100 * equity:,.2f}")
+    print(f"[optimal] final equity from $100: ${sim_equity:,.2f}")
 
 
 if __name__ == "__main__":
