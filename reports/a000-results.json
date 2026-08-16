@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-16 01:52 UTC",
+ "generated": "2026-08-16 01:58 UTC",
  "universe": [
   "AAVE-USDC",
   "ADA-USDC",
@@ -36,7 +36,7 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": 15.41,
+   "ret_pct": 15.39,
    "dd_pct": 48.09,
    "trades": 20
   },
@@ -48,7 +48,7 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": -4.13,
+   "ret_pct": -4.16,
    "dd_pct": 56.11,
    "trades": 31
   },
@@ -60,7 +60,7 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": -21.77,
+   "ret_pct": -21.78,
    "dd_pct": 42.18,
    "trades": 34
   },
@@ -72,7 +72,7 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": -23.8,
+   "ret_pct": -23.82,
    "dd_pct": 48.6,
    "trades": 13
   },
@@ -84,7 +84,7 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": -20.31,
+   "ret_pct": -20.32,
    "dd_pct": 52.9,
    "trades": 28
   },
@@ -120,8 +120,8 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": 2.31,
-   "dd_pct": 24.93,
+   "ret_pct": 2.29,
+   "dd_pct": 24.94,
    "trades": 13
   },
   {
@@ -132,7 +132,7 @@
     "cash_buffer": 0.25,
     "swap_margin": 0.02
    },
-   "ret_pct": 7.22,
+   "ret_pct": 7.18,
    "dd_pct": 20.51,
    "trades": 23
   }
@@ -144,18 +144,18 @@
   "swap_margin": 0.02
  },
  "full_period": {
-  "equity": 412.49,
-  "return_pct": 312.49,
+  "equity": 412.35,
+  "return_pct": 312.35,
   "max_dd_pct": 73.62,
   "trades": 520,
   "fees_paid": 59.05
  },
  "benchmarks": {
   "buy_hold": {
-   "BTC": 691.6,
-   "ETH": 813.3
+   "BTC": 691.4,
+   "ETH": 812.6
   },
-  "best_coin_pct": 813.3,
+  "best_coin_pct": 812.6,
   "cash_yield_pct": 14.6
  }
 }
