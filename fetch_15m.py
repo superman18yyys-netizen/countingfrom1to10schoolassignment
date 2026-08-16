@@ -13,7 +13,7 @@ sys.path.insert(0, ".")
 from bot.data.fetcher import fetch_candles
 from bot.data.store import Store
 
-CHUNKS = [(450, 0), (900, 450)]
+CHUNKS = [(450, 0), (900, 450), (1350, 900), (1800, 1350)]
 TOP_N = 15
 
 
