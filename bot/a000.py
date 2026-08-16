@@ -27,7 +27,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from bot.indicators.ta import atr, sma
+from bot.indicators.ta import atr, rsi, sma
 
 RTC = 0.014                    # 2 x (0.6% taker + 0.1% slippage)
 CASH_YIELD = 0.045
@@ -117,11 +117,16 @@ class A000Config:
     trade_from: int = 0           # timeline position where trading may
     trade_to: int = 10**9         # begin/end (walk-forward spans;
                                   # features always use full history)
-    core_frac: float = 0.0        # core-satellite: fraction of the
+    core_frac: float = 0.65       # core-satellite: fraction of the
                                   # budget always held in BTC+ETH
                                   # (0 = pure rotation). Core sells only
                                   # when its own momentum turns negative.
     core_pairs: tuple = ("BTC-USDC", "ETH-USDC")
+    oracle_filter: bool = True    # entry filter mined from the optimal
+                                  # path (reports/oracle-rules.json):
+                                  # mom_40 >= 0, atr_pctile >= 0.40,
+                                  # rsi14 in [30, 65], dd > -0.75,
+                                  # micro-pullback not surge-chase
 
 
 @dataclass
@@ -158,6 +163,26 @@ def run_a000(closes: Dict[str, pd.Series],
 
     sma200 = {p: sma(closes[p], 200).reindex(timeline).ffill()
               for p in pairs}
+
+    # oracle-rule features (precomputed, reindexed to the timeline)
+    mom40: Dict[str, pd.Series] = {}
+    rsi14: Dict[str, pd.Series] = {}
+    atr_pctl: Dict[str, pd.Series] = {}
+    surge12: Dict[str, pd.Series] = {}
+    dd1y: Dict[str, pd.Series] = {}
+    for pair in pairs:
+        close = closes[pair]
+        mom40[pair] = (close / close.shift(40) - 1.0) \
+            .reindex(timeline).ffill()
+        rsi14[pair] = rsi(close, 14).reindex(timeline).ffill()
+        a = atr(highs[pair], lows[pair], close, 14) / close
+        atr_pctl[pair] = a.rolling(540, min_periods=100).apply(
+            lambda v: (v <= v[-1]).mean(), raw=True) \
+            .reindex(timeline).ffill()
+        surge12[pair] = (close / close.shift(12) - 1.0) \
+            .reindex(timeline).ffill()
+        dd1y[pair] = (close / close.rolling(2160, min_periods=100).max()
+                      - 1.0).reindex(timeline).ffill()
 
     cash = cfg.capital
     holdings: Dict[str, float] = {}    # pair -> qty
@@ -222,7 +247,8 @@ def run_a000(closes: Dict[str, pd.Series],
                     sell_all(pair, price, t)
 
         # current scores (risk-adjusted momentum); only positive
-        # absolute momentum is buyable (absolute filter)
+        # absolute momentum is buyable (absolute filter), plus the
+        # oracle-mined entry rules when enabled
         scored = []
         for pair in pairs:
             if t in closes[pair].index:
@@ -230,7 +256,22 @@ def run_a000(closes: Dict[str, pd.Series],
                 if s == s:
                     scored.append((float(s), pair))
         scored.sort(reverse=True)
-        buyable = [(s, p) for s, p in scored if s > 0]
+        buyable = []
+        for s, pair in scored:
+            if s <= 0:
+                continue
+            if cfg.oracle_filter and pair not in cfg.core_pairs:
+                m40 = mom40[pair].loc[t]
+                r14 = rsi14[pair].loc[t]
+                ap = atr_pctl[pair].loc[t]
+                dd = dd1y[pair].loc[t]
+                ok = (m40 == m40 and m40 >= 0.0
+                      and r14 == r14 and 30.0 <= r14 <= 65.0
+                      and ap == ap and ap >= 0.40
+                      and dd == dd and dd > -0.75)
+                if not ok:
+                    continue
+            buyable.append((s, pair))
 
         # risk-parity target weights: core (BTC/ETH anchor) + satellite
         # (top-K alts by momentum, excluding core pairs)
