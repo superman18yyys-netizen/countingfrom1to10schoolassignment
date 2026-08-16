@@ -1,0 +1,33 @@
+name: athena-full
+
+# Fetches the ENTIRE 1H history of the top-20 USDC pairs (chunked
+# 3600d) and uploads it as an artifact. Athena training stays local.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: pip install -r requirements-swarm.txt
+      - name: Decompress committed 4H universe (for the liquid ranking)
+        run: gunzip -c data/universe.db.gz > data/universe.db
+      - name: Fetch full 1H history
+        run: python fetch_full_1h.py
+      - name: Upload full 1H database
+        uses: actions/upload-artifact@v4
+        with:
+          name: athena-full-1h
+          path: data/athena_full.db
+          retention-days: 7
