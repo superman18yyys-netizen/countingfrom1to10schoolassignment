@@ -26,8 +26,8 @@ def main() -> None:
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=days)
 
-    available = list_products()
-    ids = {p["id"] for p in available}
+    available = list_products("USDC")
+    ids = {p.get("product_id") or p.get("id") for p in available}
     missing = [u for u in UNIVERSE if u not in ids]
     if missing:
         print(f"[universe] not listed on Coinbase: {missing}")
