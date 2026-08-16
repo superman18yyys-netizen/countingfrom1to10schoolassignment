@@ -2,4 +2,6 @@ venv/
 .venv/
 __pycache__/
 *.pyc
-/data/
+/data/*.db
+/data/*.db.gz
+!/data/universe.db.gz

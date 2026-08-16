@@ -1,14 +1,16 @@
 name: oracle-run
 
-# The full mechanical pipeline, run on GitHub servers:
-#   1. fetch EVERY USDC pair Coinbase lists (6y 4H, backward paging)
-#   2. oracle_optimal.py  — DP over all coins: the mechanically
+# The full mechanical pipeline — runs DIRECTLY on the committed
+# universe database (data/universe.db.gz), no fetch needed:
+#   1. decompress data/universe.db.gz -> data/universe.db
+#   2. oracle_optimal.py  — DP over all 405 coins: the mechanically
 #      calculated best path ($100 -> ?), replayed day-by-day with
-#      real cash/holdings/fees, full trade ledger saved
-#   3. mine_oracle_rules.py — extract the observable entry rules from
-#      the optimal path for A-000
-#   4. run_a000.py — the full-period report with the mined rules
+#      real cash/holdings/fees; full trade ledger saved
+#   3. mine_oracle_rules.py — extract the observable entry rules
+#      from the optimal path for A-000
+#   4. run_a000.py — full-period report with the mined rules
 #   5. commit everything to reports/
+# Every stage prints progress + timing to the workflow log.
 on:
   workflow_dispatch:
 
@@ -16,29 +18,7 @@ permissions:
   contents: write
 
 jobs:
-  fetch:
-    runs-on: ubuntu-latest
-    timeout-minutes: 100
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements-swarm.txt
-      - name: Install dependencies
-        run: pip install -r requirements-swarm.txt
-      - name: Fetch full universe
-        run: python fetch_universe.py
-      - name: Upload universe database
-        uses: actions/upload-artifact@v4
-        with:
-          name: universe-data
-          path: data/universe.db
-          retention-days: 7
-
   analyze:
-    needs: fetch
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -52,11 +32,8 @@ jobs:
         run: pip install -r requirements-swarm.txt
       - name: Install libomp (LightGBM on ubuntu)
         run: sudo apt-get update && sudo apt-get install -y libomp-dev
-      - name: Download universe database
-        uses: actions/download-artifact@v4
-        with:
-          name: universe-data
-          path: data
+      - name: Decompress committed universe database
+        run: gunzip -c data/universe.db.gz > data/universe.db
       - name: Optimal path (mechanical perfect run)
         run: python oracle_optimal.py
       - name: Mine rules from the optimal path

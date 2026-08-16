@@ -1,12 +1,17 @@
 name: universe-data
 
-# Fetches 6y of 4H candles for the expanded USDC universe and uploads
-# it as an artifact for the A-000 lab.
+# REFRESH workflow: re-fetches the full USDC universe (405 pairs,
+# 6y 4H) and commits the COMPRESSED database (data/universe.db.gz)
+# to the repository, where oracle-run uses it directly.
+# The committed .gz is the durable store; artifacts are only for
+# debugging and expire in 7 days.
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "10 3 * * *"   # daily refresh
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   fetch:
@@ -21,11 +26,14 @@ jobs:
           cache-dependency-path: requirements-swarm.txt
       - name: Install dependencies
         run: pip install -r requirements-swarm.txt
-      - name: Fetch universe
+      - name: Fetch full universe
         run: python fetch_universe.py
-      - name: Upload universe database
-        uses: actions/upload-artifact@v4
-        with:
-          name: universe-data
-          path: data/universe.db
-          retention-days: 7
+      - name: Compress database
+        run: gzip -9 -f -k data/universe.db
+      - name: Commit compressed database
+        run: |
+          git config user.name "universe-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/universe.db.gz
+          git commit -m "data: universe refresh $(date -u +%Y-%m-%d) ($(du -h data/universe.db.gz | cut -f1))" || echo "nothing new"
+          git push
