@@ -1,0 +1,39 @@
+name: nn-precision
+
+# Heavy neural-network precision lab on GitHub compute: trains MLP +
+# CNN (sign-asymmetric loss) against the LightGBM entry-precision
+# frontier at 4H, uploads the report + test-fold probabilities as
+# artifacts. Research only — the Athena champion stays local.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-swarm.txt scikit-learn
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Decompress committed 4H universe
+        run: gunzip -c data/universe.db.gz > data/universe.db
+      - name: Train NN precision lab
+        run: python nn_lab/nn_precision_lab.py
+      - name: Upload report and probabilities
+        uses: actions/upload-artifact@v4
+        with:
+          name: nn-precision-report
+          path: |
+            reports/nn_precision.json
+            reports/nn_precision_probs.npz
+          retention-days: 7
