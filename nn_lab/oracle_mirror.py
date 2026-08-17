@@ -154,6 +154,7 @@ def main():
     n_trades_total = 0
     bar_order = sorted(range(len(times)), key=lambda j: times[j])
     frontier = {}
+    preds = {}
 
     for k in range(2, 5):
         trm = pos < bnds[k - 1]
@@ -163,83 +164,91 @@ def main():
                              colsample_bytree=0.8, verbose=-1, n_jobs=4)
         clf.fit(X[trm], ybin[trm])
         p = clf.predict_proba(X)[:, 1]
+        preds[k] = (p, tem)
         for t in (0.20, 0.25, 0.30, 0.35, 0.40):
             sel = tem & (p >= t)
             if sel.sum() < 8:
                 continue
             frontier.setdefault(t, []).append(float(ybin[sel].mean()))
-        cash = equity
-        in_pos = False
-        units = 0.0
-        entry_px = 0.0
-        run_hi = 0.0
-        held_pair = None
-        bars_held = 0
-        fold_trades = 0
-        for j in bar_order:
-            if not tem[j]:
-                continue
-            p_ = keys[j][0]
-            i = keys[j][1]
-            c = closes[p_].to_numpy()
-            if in_pos and p_ == held_pair:
-                bars_held += 1
-                px = c[i]
-                stop_px = None
-                if px <= entry_px * (1 - HARD_STOP):
-                    stop_px = entry_px * (1 - HARD_STOP)
-                else:
-                    run_hi = max(run_hi, px)
-                    if px <= run_hi * (1 - TRAIL):
-                        stop_px = px
-                    elif bars_held >= CAP_BARS:
-                        stop_px = px
-                if stop_px is not None:
-                    cash += stop_px * units * (1 - FEE)
-                    in_pos = False
-                    held_pair = None
-                    fold_trades += 1
-            elif (not in_pos) and p[j] >= THR and i + 1 < len(c):
-                stake = cash * STAKE
-                entry_px = c[i] * (1 + SLIP)
-                units = stake * (1 - FEE) / entry_px
-                cash -= stake
-                in_pos = True
-                held_pair = p_
-                run_hi = entry_px
-                bars_held = 0
-        if in_pos:
-            px = closes[held_pair].iloc[-1]
-            cash += px * units * (1 - FEE)
-            in_pos = False
-            fold_trades += 1
-        fold_ret = cash / equity - 1.0
-        equity = cash
-        peak = max(peak, equity)
-        max_dd = min(max_dd, equity / peak - 1.0)
-        fold_rets.append(round(fold_ret * 100, 1))
-        n_trades_total += fold_trades
-        log(f"fold {k}: {fold_ret:+.1%} (trades {fold_trades}, "
-            f"equity ${equity:.2f})")
+        log(f"fold {k} predictions cached")
 
-    total_pct = round((equity / 100 - 1) * 100, 1)
+    results = {}
+    for THR in (0.30, 0.40):
+        equity = 100.0
+        peak = equity
+        max_dd = 0.0
+        fold_rets = []
+        n_trades_total = 0
+        for k in range(2, 5):
+            p, tem = preds[k]
+            cash = equity
+            free_ts = -1.0
+            fold_trades = 0
+            for j in bar_order:
+                if not tem[j]:
+                    continue
+                if times[j] <= free_ts:
+                    continue
+                p_ = keys[j][0]
+                i = keys[j][1]
+                c = closes[p_].to_numpy()
+                if p[j] >= THR and i + 1 < len(c):
+                    stake = cash * STAKE
+                    entry_px = c[i] * (1 + SLIP)
+                    units = stake * (1 - FEE) / entry_px
+                    # exact exit scan over EVERY 4H bar of the pair
+                    n = len(c)
+                    run_hi = entry_px
+                    exit_px = None
+                    exit_k = i + 1
+                    for kk in range(1, min(CAP_BARS, n - i - 1) + 1):
+                        px = c[i + kk]
+                        exit_k = i + kk
+                        if px <= entry_px * (1 - HARD_STOP):
+                            exit_px = entry_px * (1 - HARD_STOP)
+                            break
+                        run_hi = max(run_hi, px)
+                        if px <= run_hi * (1 - TRAIL):
+                            exit_px = px
+                            break
+                        if kk == min(CAP_BARS, n - i - 1):
+                            exit_px = px
+                    if exit_px is None:
+                        exit_px = c[min(i + CAP_BARS, n - 1)]
+                    cash -= stake
+                    cash += exit_px * units * (1 - FEE)
+                    fold_trades += 1
+                    free_ts = closes[p_].index[
+                        min(exit_k, n - 1)].timestamp()
+                    peak = max(peak, cash)
+                    max_dd = min(max_dd, cash / peak - 1.0)
+            fold_ret = cash / equity - 1.0
+            equity = cash
+            peak = max(peak, equity)
+            max_dd = min(max_dd, equity / peak - 1.0)
+            fold_rets.append(round(fold_ret * 100, 1))
+            n_trades_total += fold_trades
+            log(f"THR {THR:.2f} fold {k}: {fold_ret:+.1%} "
+                f"(trades {fold_trades}, equity ${equity:.2f})")
+        results[THR] = {"end": round(equity, 2),
+                        "total_pct": round((equity / 100 - 1) * 100, 1),
+                        "folds_pct": fold_rets, "trades": n_trades_total,
+                        "max_dd": round(max_dd, 4)}
+
     log("")
     log("candidate precision (mean over folds): "
         + ", ".join(f"{t:.2f}->{np.mean(v):.0%}" for t, v in frontier.items()))
-    log(f"ORACLE-MIRROR BOT: $100 -> ${equity:.2f} ({total_pct:+.1f}%) "
-        f"over {span_y:.1f}y, folds {fold_rets}, trades {n_trades_total}, "
-        f"max_dd {max_dd:.1%}")
+    for THR, res in results.items():
+        log(f"ORACLE-MIRROR thr {THR:.2f}: $100 -> ${res['end']:.2f} "
+            f"({res['total_pct']:+.1f}%) folds {res['folds_pct']} "
+            f"trades {res['trades']} max_dd {res['max_dd']:.1%}")
     log(f"GEN2B CHAMPION:    $100 -> ${GEN2B['end']:.2f} "
         f"({GEN2B['total_pct']:+.1f}%) over {GEN2B['years']}y")
     report = {"candidate_precision_by_thr":
               {str(t): round(float(np.mean(v)), 4)
                for t, v in frontier.items()},
-              "daily_bot": {"end": round(equity, 2), "total_pct": total_pct,
-                            "folds_pct": fold_rets,
-                            "trades": n_trades_total,
-                            "max_dd": round(max_dd, 4),
-                            "years": round(span_y, 2), "thr": THR,
-                            "stake": STAKE},
+              "years": round(span_y, 2), "stake": STAKE,
+              "daily_bot": results,
               "gen2b": GEN2B}
     os.makedirs("reports", exist_ok=True)
     with open(f"{OUT}.json", "w") as fh:
