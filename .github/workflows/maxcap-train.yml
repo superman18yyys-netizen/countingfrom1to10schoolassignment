@@ -1,0 +1,41 @@
+name: maxcap-train
+
+# MAX-CAPACITY variant: 800 trees, depth 10, 255 leaves, minimal
+# regularization, all 9 years — trained as hard as possible. Reports
+# BOTH training-set precision (memorization, honestly labeled) and
+# holdout precision (the real number). Adopt via champion gate only
+# if holdout improves. On demand only.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: pip install -r requirements-swarm.txt scikit-learn
+      - name: Decompress committed 4H universe (volume ranking for fetch)
+        run: gunzip -c data/universe.db.gz > data/universe.db
+      - name: Fetch full 1H history (top-20, chunked)
+        run: python fetch_full_1h.py
+      - name: Train max-capacity model (9y, top-13, 4H)
+        run: python nn_lab/maxcap_train.py
+      - name: Upload max-capacity model
+        uses: actions/upload-artifact@v4
+        with:
+          name: maxcap-model
+          path: |
+            reports/maxcap_model.json
+            reports/maxcap_model.txt
+            reports/maxcap_model_probs.npz
+          retention-days: 14
