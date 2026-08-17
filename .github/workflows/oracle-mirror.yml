@@ -1,0 +1,36 @@
+name: oracle-mirror
+
+# Two-stage oracle-mirror daily bot: mechanical candidate filter
+# (confirmed-off-zigzag-low, 95% recall) + fusion model on candidates
+# with zigzag-state features. Walk-forward compounding vs gen2b.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: pip install -r requirements-swarm.txt scikit-learn
+      - name: Decompress committed 4H universe (volume ranking for fetch)
+        run: gunzip -c data/universe.db.gz > data/universe.db
+      - name: Fetch full 1H history (top-20, chunked)
+        run: python fetch_full_1h.py
+      - name: Run oracle-mirror bot
+        run: python nn_lab/oracle_mirror.py
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-mirror-report
+          path: reports/oracle_mirror.json
+          retention-days: 14
