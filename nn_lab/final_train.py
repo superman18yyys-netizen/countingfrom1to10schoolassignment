@@ -237,7 +237,7 @@ def live_outcome(c, t, hard_stop=HARD_STOP, trail=EXIT_TRAIL_LIVE,
         return None
     entry = c[t] * (1 + SLIP)
     run_hi = entry
-    for k in range(1, min(cap, n - t) + 1):
+    for k in range(1, min(cap, n - t - 1) + 1):
         px = c[t + k]
         if px <= entry * (1 + hard_stop):
             return (entry * (1 + hard_stop)) / entry - 1 - FEE

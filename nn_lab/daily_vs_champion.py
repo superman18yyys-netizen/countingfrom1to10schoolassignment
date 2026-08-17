@@ -111,7 +111,7 @@ def main():
     n_trades_total = 0
     bar_order = sorted(range(len(times)), key=lambda j: times[j])
 
-    for k in range(1, 5):
+    for k in range(2, 5):
         trm = pos < bnds[k - 1]
         tem = (pos >= bnds[k - 1]) & (pos < bnds[k])
         log(f"--- fold {k}: train {trm.sum()} test {tem.sum()} ---")

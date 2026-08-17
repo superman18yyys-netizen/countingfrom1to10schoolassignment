@@ -155,7 +155,7 @@ def main():
     bar_order = sorted(range(len(times)), key=lambda j: times[j])
     frontier = {}
 
-    for k in range(1, 5):
+    for k in range(2, 5):
         trm = pos < bnds[k - 1]
         tem = (pos >= bnds[k - 1]) & (pos < bnds[k])
         clf = LGBMClassifier(n_estimators=300, learning_rate=0.05,
