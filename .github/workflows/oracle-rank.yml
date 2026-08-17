@@ -1,0 +1,36 @@
+name: oracle-rank
+
+# Oracle-ranking lab: regression head on segment net gains, top-K
+# selection evaluated like the oracle. Research only.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-swarm.txt
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-swarm.txt scikit-learn
+      - name: Decompress committed 4H universe
+        run: gunzip -c data/universe.db.gz > data/universe.db
+      - name: Train oracle-ranking lab
+        run: python nn_lab/oracle_rank_lab.py
+      - name: Upload report and probabilities
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-rank-report
+          path: |
+            reports/oracle_rank_lab.json
+            reports/oracle_rank_lab_probs.npz
+          retention-days: 7
