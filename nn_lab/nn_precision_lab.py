@@ -289,7 +289,7 @@ def fit(model, Xt, yt, Xe, pos_w=0.35, epochs=120, bs=4096):
         return torch.sigmoid(model(Xe)).numpy()
 
 
-def prep(M, tr, te, mu=None, sd=None):
+def prep(M, tr, te, y, mu=None, sd=None):
     if mu is None:
         mu = M[tr].mean(0, keepdims=True)
         sd = M[tr].std(0, keepdims=True) + 1e-9
@@ -365,11 +365,11 @@ def main():
 
     log("MLP tabular (full data, sign-asymmetric)...")
     F = np.concatenate([X1, X2, X3], axis=1)
-    Ft, Fyt, Fe = prep(F, tr, te)
+    Ft, Fyt, Fe = prep(F, tr, te, y)
     p_mlp = fit(MLP(Ft.shape[1]), Ft, Fyt, Fe)
 
     log("CNN raw 48-bar windows (full data, sign-asymmetric)...")
-    Wt, Wyt, We = prep(W, tr, te)
+    Wt, Wyt, We = prep(W, tr, te, y)
     p_cnn = fit(CNN(Wt.shape[1]), Wt, Wyt, We)
 
     ens = (pb[te] + p_mlp + p_cnn) / 3.0
