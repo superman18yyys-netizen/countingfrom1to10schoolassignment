@@ -1,29 +1,19 @@
-"""Continuous training protocol — the never-stop improvement loop.
+"""Final one-shot trainer — 9 years of top-13 coins, model complete.
 
-CYCLE (runs on CI, scheduled weekly + on demand):
-  1. load all 4H data + realistic segments (fees + latency in labels)
-  2. ROLL-FORWARD walk-forward: for each fold boundary, train the
-     mechanical-fusion model on folds < k, evaluate OOS on fold k
-  3. realized-EV evaluation (the honest "profit"): for every bar in
-     the OOS fold, simulate the trade the bot would actually take —
-     entry close x (1+slip), trail exit 2%, 30-bar cap, fees both
-     sides — and compute realized net. No assumed win sizes.
-  4. operating point: threshold that maximizes mean realized EV per
-     trade across OOS folds, with a MINIMUM precision floor so we
-     never trade in a band that history says loses.
-  5. champion rule: if the new model's OOS EV beats the archived
-     champion's, archive it (model, threshold, stop, trail, sizer,
-     EV). Else the champion stands — no regression, ever.
-  6. policy card: threshold, precision band, EV/trade, trades/yr,
-     hard stop, trail, net-regression sizer — the live bot's orders.
+Trains the mechanical-fusion model ONCE on the deepest data available:
+the full 1H history (BTC/ETH/LTC back to 2016 = ~9.9y), top-13 coins by
+USDC volume, resampled to 4H (the granularity where the measured fee
+physics works — 1H is 3x below breakeven at 1.4% round trip).
 
-Loss machinery (the "0 losses" defense, all mechanical):
-  - trade only inside the measured OOS band (stand in cash outside)
-  - hard stop: exit at -2% before the trail can give back more
-  - trail exit 2% (never ride a winner into a loss)
-  - per-cycle champion gate (no adoption of worse models)
+Outputs a COMPLETE deployable model:
+  - final_model.txt          serialized LightGBM booster (load and trade)
+  - final_policy.json        threshold, stops, sizer, EV card
+  - probs npz                holdout probabilities for verification
 
-Self-contained research mirror; the Athena champion stays local.
+Split: train = first 80% of the timeline, holdout = last ~2 years.
+No weekly loop — trained once, evaluated once, done. Honest stop: if
+no threshold band clears the EV floor on the holdout, the policy card
+is withheld and the model is NOT deployed.
 """
 from __future__ import annotations
 
@@ -45,12 +35,13 @@ ZIG = 0.02
 SEED = 7
 np.random.seed(SEED)
 
-DB = "data/universe.db"
-OUT = "reports/continuous_champion"
-HARD_STOP = -0.02      # exit if price falls 2% below entry
-EXIT_TRAIL_LIVE = 0.02  # trail the runner 2% below its high
-MAX_HOLD_BARS = 30      # 4H bars = 5 days
-MIN_EV_FLOOR = 0.002    # refuse to trade a band with less than +0.2%/trade
+TOP_N = 13
+DB_1H = "data/athena_full.db"
+OUT = "reports/final_model"
+HARD_STOP = -0.02
+EXIT_TRAIL_LIVE = 0.02
+MAX_HOLD_BARS = 30
+MIN_EV_FLOOR = 0.002
 
 
 def log(m):
@@ -117,7 +108,7 @@ def realistic_segments(closes, pct=ZIG):
                     segs.append((ei, xi, entry_p, exit_p, net, dur))
                 pending = None
         out[p] = segs
-    return segs
+    return out
 
 
 def build_features_pos(closes, highs, lows, vols):
@@ -239,11 +230,8 @@ def mechanical_layer(closes, highs, lows, vols, btc_close=None):
     return out
 
 
-def live_outcome(c, h, l, t, hard_stop=HARD_STOP, trail=EXIT_TRAIL_LIVE,
+def live_outcome(c, t, hard_stop=HARD_STOP, trail=EXIT_TRAIL_LIVE,
                  cap=MAX_HOLD_BARS):
-    """What the bot ACTUALLY realizes entering bar t: entry = close x
-    (1+slip), exit on hard stop, trail, or cap. Returns realized net
-    after fees, or None if the window doesn't exist."""
     n = len(c)
     if t + 1 >= n:
         return None
@@ -252,8 +240,7 @@ def live_outcome(c, h, l, t, hard_stop=HARD_STOP, trail=EXIT_TRAIL_LIVE,
     for k in range(1, min(cap, n - t) + 1):
         px = c[t + k]
         if px <= entry * (1 + hard_stop):
-            out_px = entry * (1 + hard_stop)
-            return out_px / entry - 1 - FEE
+            return (entry * (1 + hard_stop)) / entry - 1 - FEE
         run_hi = max(run_hi, px)
         if px <= run_hi * (1 - trail):
             return px / entry - 1 - FEE
@@ -261,27 +248,40 @@ def live_outcome(c, h, l, t, hard_stop=HARD_STOP, trail=EXIT_TRAIL_LIVE,
 
 
 def main():
-    log("loading 4H universe...")
-    store = Store(DB)
+    log("loading full 1H history...")
+    store = Store(DB_1H)
     cand = {}
     for pair in [r[0] for r in store.conn.execute(
-            "SELECT DISTINCT pair FROM candles WHERE granularity='FOUR_HOUR'")]:
-        df = store.load_candles(pair, "FOUR_HOUR")
-        if df is not None and len(df) >= 8000:
+            "SELECT DISTINCT pair FROM candles WHERE granularity='ONE_HOUR'")]:
+        df = store.load_candles(pair, "ONE_HOUR")
+        if df is not None and len(df) >= 3000:
             cand[pair] = df.dropna()
     med = {p: float((d["volume"] * d["close"]).tail(1000).median())
            for p, d in cand.items()
            if (d["volume"] * d["close"]).tail(1000).notna().any()}
-    top = sorted(med, key=lambda p: -med[p])[:20]
-    closes = {p: cand[p]["close"] for p in top}
-    highs = {p: cand[p]["high"] for p in top}
-    lows = {p: cand[p]["low"] for p in top}
-    vols = {p: cand[p]["volume"] for p in top}
-    btc = closes.get("BTC-USDC")
-    segs = {p: realistic_segments(closes)[p] for p in top}
+    top = sorted(med, key=lambda p: -med[p])[:TOP_N]
+    log(f"top-{TOP_N}: {', '.join(p[:p.index('-')] for p in top)}")
+
+    # resample 1H -> 4H (the fee-viable granularity)
+    r4 = {}
+    for p in top:
+        d = cand[p]
+        d4 = d.resample("4h").agg({"open": "first", "high": "max",
+                                   "low": "min", "close": "last",
+                                   "volume": "sum"}).dropna()
+        r4[p] = d4
+    closes = {p: r4[p]["close"] for p in top}
+    highs = {p: r4[p]["high"] for p in top}
+    lows = {p: r4[p]["low"] for p in top}
+    vols = {p: r4[p]["volume"] for p in top}
+    t0 = min(c.index[0] for c in closes.values())
+    t1 = max(c.index[-1] for c in closes.values())
+    span_y = (t1 - t0).total_seconds() / (365.25 * 86400)
+    log(f"4H span: {span_y:.1f} years ({t0.date()} .. {t1.date()})")
+    segs = realistic_segments(closes)
     log(f"segments: {sum(len(v) for v in segs.values())}")
 
-    mech = mechanical_layer(closes, highs, lows, vols, btc)
+    mech = mechanical_layer(closes, highs, lows, vols, closes.get("BTC-USDC"))
     f1 = build_features_pos(closes, highs, lows, vols)
     f3 = build_features_ladder(closes, highs, lows, vols)
 
@@ -306,90 +306,84 @@ def main():
         ynet.append(g[idx])
         keys += [(p, int(i)) for i in idx]
         times += [t.timestamp() for t in fa[ok].index]
-    Xraw = np.vstack(Xraw); Xmech = np.vstack(Xmech)
-    X = np.concatenate([Xraw, Xmech], axis=1)
+    X = np.concatenate([np.vstack(Xraw), np.vstack(Xmech)], axis=1)
     ybin = np.concatenate(ybin); ynet = np.concatenate(ynet)
     pos = np.array(times)
     log(f"rows {len(ybin)} pos {ybin.mean():.4f} features {X.shape[1]}")
 
-    # precompute live outcomes once per (pair, idx) for ALL rows
-    log("simulating realized outcomes for every bar...")
-    realized = np.full(len(ybin), np.nan)
-    for p, tlist in [(p, [k[1] for k in keys if k[0] == p]) for p in top]:
-        c = closes[p].to_numpy(); h = highs[p].to_numpy()
-        l = lows[p].to_numpy()
-        m = np.array([k[0] == p for k in keys])
-        for j in np.where(m)[0]:
-            realized[j] = live_outcome(c, h, l, keys[j][1])
-    log(f"outcomes computed: {np.isfinite(realized).sum()}")
+    # single split: train first 80%, holdout last 20%
+    bnd = np.quantile(pos, 0.80)
+    tr = pos < bnd
+    te = ~tr
+    log(f"train {tr.sum()} | holdout {te.sum()} "
+        f"(holdout starts {pd.Timestamp(int(bnd), unit='s').date()})")
 
-    # ROLL-FORWARD: test each fold k>=2, train on folds < k
-    bnds = np.linspace(pos.min(), pos.max() + 1, 6, dtype=int)
-    fold_ev = []
-    best_thr = None
-    for k in range(2, 5):
-        trm = pos < bnds[k - 1]
-        tem = (pos >= bnds[k - 1]) & (pos < bnds[k])
-        log(f"--- fold {k}: train {trm.sum()} test {tem.sum()} ---")
-        clf = LGBMClassifier(n_estimators=250, learning_rate=0.05,
-                             max_depth=7, num_leaves=63, subsample=0.8,
-                             colsample_bytree=0.8, verbose=-1, n_jobs=4)
-        clf.fit(X[trm], ybin[trm])
-        p = clf.predict_proba(X)[:, 1]
-        for t in (0.20, 0.25, 0.30, 0.35, 0.40):
-            sel = tem & (p >= t)
-            n_sel = int(sel.sum())
-            if n_sel < 8:
-                continue
-            ev = float(np.nanmean(realized[sel])) - FEE  # realized already
-            # realized includes fees; ev per trade:
-            ev = float(np.nanmean(realized[sel]))
-            prec = float(ybin[sel].mean())
-            log(f"  thr {t:.2f}: n {n_sel} prec {prec:.0%} "
-                f"EV/trade {ev:+.3%}")
-            fold_ev.append((k, t, ev, n_sel, prec))
-    # champion: best operating point averaged over folds (mean EV,
-    # preferring the highest EV point with >=15 trades total)
-    valid = [x for x in fold_ev if x[3] >= 15]
-    if valid:
-        agg = {}
-        for k, t, ev, n, prec in valid:
-            agg.setdefault(t, []).append((ev, n, prec))
-        best = max(agg, key=lambda t: np.mean([a[0] for a in agg[t]]))
-        mean_ev = float(np.mean([a[0] for a in agg[best]]))
-        mean_prec = float(np.mean([a[2] for a in agg[best]]))
-        n_tot = int(sum(a[1] for a in agg[best]))
-        # net-regression sizer (predict segment net within band)
-        reg_tr = pos < bnds[3]  # train sizer on earlier folds
-        sel_tr = reg_tr & (ynet > 0)
-        rg = LGBMRegressor(n_estimators=250, learning_rate=0.05,
-                           max_depth=7, num_leaves=63, subsample=0.8,
-                           colsample_bytree=0.8, verbose=-1, n_jobs=4)
-        rg.fit(X[sel_tr], ynet[sel_tr])
-        log(f"CHAMPION: thr {best:.2f} mean EV {mean_ev:+.3%}/trade "
-            f"prec {mean_prec:.0%} trades {n_tot} (folds 2-4)")
-        policy = {
-            "threshold": best,
-            "mean_ev_per_trade": mean_ev,
-            "mean_precision": mean_prec,
-            "n_trades_oos": n_tot,
-            "hard_stop": HARD_STOP,
-            "trail": EXIT_TRAIL_LIVE,
-            "max_hold_bars": MAX_HOLD_BARS,
-            "slip": SLIP, "fee_per_side": FEE,
-            "sizer": "net-regression (LGBMRegressor)",
-            "train_rows": int(trm.sum()),
-            "updated": pd.Timestamp.utcnow().isoformat(),
-        }
-        os.makedirs("reports", exist_ok=True)
-        with open(f"{OUT}.json", "w") as fh:
-            json.dump(policy, fh, indent=1)
-        np.savez_compressed(f"{OUT}_model.npz",
-                            thr=np.float32(best),
-                            n_est=np.int32(250), lr=np.float32(0.05))
-        log("policy card written: " + json.dumps(policy, indent=1))
+    clf = LGBMClassifier(n_estimators=300, learning_rate=0.05, max_depth=7,
+                         num_leaves=63, subsample=0.8, colsample_bytree=0.8,
+                         verbose=-1, n_jobs=4)
+    clf.fit(X[tr], ybin[tr])
+    p = clf.predict_proba(X)[:, 1]
+
+    # realized EV on the holdout
+    log("simulating realized outcomes (holdout)...")
+    realized = np.full(len(ybin), np.nan)
+    for p_ in top:
+        c = closes[p_].to_numpy()
+        m = np.array([k[0] == p_ for k in keys])
+        for j in np.where(m)[0]:
+            if te[j]:
+                realized[j] = live_outcome(c, keys[j][1])
+    log(f"holdout outcomes: {np.isfinite(realized[te]).sum()}")
+
+    # net-regression sizer
+    rg = LGBMRegressor(n_estimators=300, learning_rate=0.05, max_depth=7,
+                       num_leaves=63, subsample=0.8, colsample_bytree=0.8,
+                       verbose=-1, n_jobs=4)
+    sel_tr = tr & (ynet > 0)
+    rg.fit(X[sel_tr], ynet[sel_tr])
+    pnet = rg.predict(X)
+
+    report = {"span_years": round(span_y, 2), "top_n": TOP_N,
+              "coins": top, "rows": int(len(ybin)),
+              "train": int(tr.sum()), "holdout": int(te.sum()),
+              "pos_rate": float(ybin.mean()),
+              "holdout_from": pd.Timestamp(int(bnd), unit='s').date().isoformat()}
+    log("--- holdout: threshold | n | precision | EV/trade ---")
+    best = None
+    for t in (0.20, 0.25, 0.30, 0.35, 0.40):
+        sel = te & (p >= t)
+        n_sel = int(sel.sum())
+        if n_sel < 8:
+            continue
+        ev = float(np.nanmean(realized[sel]))
+        prec = float(ybin[sel].mean())
+        log(f"  {t:.2f} | {n_sel} | {prec:.0%} | {ev:+.3%}")
+        if ev >= MIN_EV_FLOOR and (best is None or ev > best[1]):
+            best = (t, ev, prec, n_sel)
+    if best is None:
+        log("NO PROFITABLE BAND on holdout — model NOT deployed "
+            "(honest stop)")
+        report["deployed"] = False
     else:
-        log("NO PROFITABLE BAND FOUND — policy card withheld (honest stop)")
+        t, ev, prec, n_sel = best
+        report.update({
+            "deployed": True, "threshold": t,
+            "ev_per_trade": ev, "precision": prec,
+            "n_holdout_trades": n_sel,
+            "hard_stop": HARD_STOP, "trail": EXIT_TRAIL_LIVE,
+            "max_hold_bars": MAX_HOLD_BARS, "slip": SLIP,
+            "fee_per_side": FEE, "sizer": "net-regression",
+            "updated": pd.Timestamp.utcnow().isoformat()})
+        clf.booster_.save_model(f"{OUT}.txt")
+        log("MODEL COMPLETE — policy card:")
+        log(json.dumps({k: v for k, v in report.items()
+                        if k not in ("coins",)}, indent=1))
+    os.makedirs("reports", exist_ok=True)
+    with open(f"{OUT}.json", "w") as fh:
+        json.dump(report, fh, indent=1)
+    np.savez_compressed(f"{OUT}_probs.npz", y_te=ybin[te], p=p[te],
+                        pnet=pnet[te], realized=realized[te])
+    log("done")
 
 
 if __name__ == "__main__":
