@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-17 04:57 UTC",
+ "generated": "2026-08-24 04:32 UTC",
  "baseline_sage_oos_pct": 42.7,
  "method": "walk-forward 5 folds, purge 200",
  "board": [
@@ -12,7 +12,7 @@
       "buy_score": 3.5,
       "sell_score": 0.0
      },
-     "mean_excess_pct": 40.11,
+     "mean_excess_pct": 33.82,
      "trades": 0
     },
     {
@@ -21,7 +21,7 @@
       "buy_score": 3.5,
       "sell_score": 0.0
      },
-     "mean_excess_pct": -65.0,
+     "mean_excess_pct": -53.12,
      "trades": 0
     },
     {
@@ -30,7 +30,7 @@
       "buy_score": 3.5,
       "sell_score": 0.0
      },
-     "mean_excess_pct": 37.78,
+     "mean_excess_pct": 35.95,
      "trades": 0
     },
     {
@@ -39,7 +39,7 @@
       "buy_score": 3.5,
       "sell_score": 0.0
      },
-     "mean_excess_pct": 27.97,
+     "mean_excess_pct": 26.86,
      "trades": 0
     },
     {
@@ -48,11 +48,11 @@
       "buy_score": 3.5,
       "sell_score": 0.0
      },
-     "mean_excess_pct": 25.18,
+     "mean_excess_pct": 0.53,
      "trades": 0
     }
    ],
-   "mean_oos_excess_pct": 13.21,
+   "mean_oos_excess_pct": 8.81,
    "total_trades": 0,
    "winning_folds": "4/5",
    "final_params": {
@@ -69,7 +69,7 @@
      "params": {
       "sage_buy": 2.5
      },
-     "mean_excess_pct": 40.08,
+     "mean_excess_pct": 33.8,
      "trades": 0
     },
     {
@@ -77,7 +77,7 @@
      "params": {
       "sage_buy": 2.5
      },
-     "mean_excess_pct": -65.02,
+     "mean_excess_pct": -53.14,
      "trades": 0
     },
     {
@@ -85,7 +85,7 @@
      "params": {
       "sage_buy": 2.5
      },
-     "mean_excess_pct": 37.76,
+     "mean_excess_pct": 35.93,
      "trades": 0
     },
     {
@@ -93,7 +93,7 @@
      "params": {
       "sage_buy": 2.5
      },
-     "mean_excess_pct": 27.95,
+     "mean_excess_pct": 26.84,
      "trades": 0
     },
     {
@@ -101,67 +101,15 @@
      "params": {
       "sage_buy": 2.5
      },
-     "mean_excess_pct": 25.16,
+     "mean_excess_pct": 0.5,
      "trades": 0
     }
    ],
-   "mean_oos_excess_pct": 13.19,
+   "mean_oos_excess_pct": 8.79,
    "total_trades": 0,
    "winning_folds": "4/5",
    "final_params": {
     "sage_buy": 2.5
-   },
-   "promotable": false
-  },
-  {
-   "idea": "trend_pullback",
-   "folds": [
-    {
-     "fold": 1,
-     "params": {
-      "rsi_lo": 30
-     },
-     "mean_excess_pct": 40.11,
-     "trades": 0
-    },
-    {
-     "fold": 2,
-     "params": {
-      "rsi_lo": 30
-     },
-     "mean_excess_pct": -65.63,
-     "trades": 2
-    },
-    {
-     "fold": 3,
-     "params": {
-      "rsi_lo": 30
-     },
-     "mean_excess_pct": 37.78,
-     "trades": 0
-    },
-    {
-     "fold": 4,
-     "params": {
-      "rsi_lo": 30
-     },
-     "mean_excess_pct": 27.51,
-     "trades": 1
-    },
-    {
-     "fold": 5,
-     "params": {
-      "rsi_lo": 30
-     },
-     "mean_excess_pct": 24.8,
-     "trades": 1
-    }
-   ],
-   "mean_oos_excess_pct": 12.91,
-   "total_trades": 4,
-   "winning_folds": "4/5",
-   "final_params": {
-    "rsi_lo": 30
    },
    "promotable": false
   },
@@ -173,44 +121,44 @@
      "params": {
       "atr_mult": 3.5
      },
-     "mean_excess_pct": 38.12,
-     "trades": 9
+     "mean_excess_pct": 32.23,
+     "trades": 7
     },
     {
      "fold": 2,
      "params": {
       "atr_mult": 3.0
      },
-     "mean_excess_pct": -59.74,
-     "trades": 27
+     "mean_excess_pct": -45.12,
+     "trades": 31
     },
     {
      "fold": 3,
      "params": {
       "atr_mult": 3.0
      },
-     "mean_excess_pct": 32.53,
-     "trades": 14
+     "mean_excess_pct": 31.72,
+     "trades": 12
     },
     {
      "fold": 4,
      "params": {
       "atr_mult": 3.0
      },
-     "mean_excess_pct": 25.21,
-     "trades": 18
+     "mean_excess_pct": 23.42,
+     "trades": 21
     },
     {
      "fold": 5,
      "params": {
       "atr_mult": 3.0
      },
-     "mean_excess_pct": 24.75,
-     "trades": 11
+     "mean_excess_pct": 1.69,
+     "trades": 13
     }
    ],
-   "mean_oos_excess_pct": 12.17,
-   "total_trades": 79,
+   "mean_oos_excess_pct": 8.79,
+   "total_trades": 84,
    "winning_folds": "4/5",
    "final_params": {
     "atr_mult": 3.0
@@ -220,44 +168,44 @@
     {
      "pair": "BTC-USDC",
      "ret_pct": -1.29,
-     "bh_pct": -20.83,
-     "excess_pct": 19.54,
+     "bh_pct": -1.45,
+     "excess_pct": 0.16,
      "trades": 2
     },
     {
      "pair": "ETH-USDC",
-     "ret_pct": -0.02,
-     "bh_pct": -17.79,
-     "excess_pct": 17.77,
+     "ret_pct": 0.43,
+     "bh_pct": 11.41,
+     "excess_pct": -10.98,
      "trades": 2
     },
     {
      "pair": "SOL-USDC",
-     "ret_pct": 1.69,
-     "bh_pct": -19.49,
-     "excess_pct": 21.18,
-     "trades": 2
+     "ret_pct": 4.33,
+     "bh_pct": 7.7,
+     "excess_pct": -3.37,
+     "trades": 1
     },
     {
      "pair": "DOGE-USDC",
      "ret_pct": 0.0,
-     "bh_pct": -36.32,
-     "excess_pct": 36.32,
+     "bh_pct": -16.47,
+     "excess_pct": 16.47,
      "trades": 0
     },
     {
      "pair": "XRP-USDC",
      "ret_pct": -2.3,
-     "bh_pct": -29.67,
-     "excess_pct": 27.36,
+     "bh_pct": 4.39,
+     "excess_pct": -6.7,
      "trades": 1
     },
     {
      "pair": "ADA-USDC",
-     "ret_pct": 2.09,
-     "bh_pct": -35.68,
-     "excess_pct": 37.77,
-     "trades": 3
+     "ret_pct": 11.28,
+     "bh_pct": -13.84,
+     "excess_pct": 25.12,
+     "trades": 5
     }
    ]
   },
@@ -270,8 +218,8 @@
       "min_score": 2.0,
       "entry_period": 20
      },
-     "mean_excess_pct": 40.06,
-     "trades": 0
+     "mean_excess_pct": 33.55,
+     "trades": 1
     },
     {
      "fold": 2,
@@ -279,7 +227,7 @@
       "min_score": 2.0,
       "entry_period": 20
      },
-     "mean_excess_pct": -65.02,
+     "mean_excess_pct": -53.14,
      "trades": 0
     },
     {
@@ -288,7 +236,7 @@
       "min_score": 2.0,
       "entry_period": 20
      },
-     "mean_excess_pct": 37.48,
+     "mean_excess_pct": 35.65,
      "trades": 1
     },
     {
@@ -297,27 +245,79 @@
       "min_score": 2.0,
       "entry_period": 20
      },
-     "mean_excess_pct": 23.33,
-     "trades": 16
+     "mean_excess_pct": 20.67,
+     "trades": 20
     },
     {
      "fold": 5,
      "params": {
       "min_score": 1.5,
-      "entry_period": 30
+      "entry_period": 20
      },
-     "mean_excess_pct": 24.11,
-     "trades": 11
+     "mean_excess_pct": 6.86,
+     "trades": 16
     }
    ],
-   "mean_oos_excess_pct": 11.99,
-   "total_trades": 28,
+   "mean_oos_excess_pct": 8.72,
+   "total_trades": 38,
    "winning_folds": "4/5",
    "final_params": {
     "min_score": 1.5,
-    "entry_period": 30
+    "entry_period": 20
    },
    "promotable": true
+  },
+  {
+   "idea": "trend_pullback",
+   "folds": [
+    {
+     "fold": 1,
+     "params": {
+      "rsi_lo": 30
+     },
+     "mean_excess_pct": 33.82,
+     "trades": 0
+    },
+    {
+     "fold": 2,
+     "params": {
+      "rsi_lo": 30
+     },
+     "mean_excess_pct": -53.75,
+     "trades": 2
+    },
+    {
+     "fold": 3,
+     "params": {
+      "rsi_lo": 30
+     },
+     "mean_excess_pct": 35.95,
+     "trades": 0
+    },
+    {
+     "fold": 4,
+     "params": {
+      "rsi_lo": 30
+     },
+     "mean_excess_pct": 26.4,
+     "trades": 1
+    },
+    {
+     "fold": 5,
+     "params": {
+      "rsi_lo": 30
+     },
+     "mean_excess_pct": 0.14,
+     "trades": 1
+    }
+   ],
+   "mean_oos_excess_pct": 8.51,
+   "total_trades": 4,
+   "winning_folds": "4/5",
+   "final_params": {
+    "rsi_lo": 30
+   },
+   "promotable": false
   },
   {
    "idea": "mtf_trend",
@@ -327,49 +327,49 @@
      "params": {
       "day_sma": 20
      },
-     "mean_excess_pct": 35.76,
-     "trades": 12
+     "mean_excess_pct": 30.01,
+     "trades": 14
     },
     {
      "fold": 2,
      "params": {
       "day_sma": 50
      },
-     "mean_excess_pct": -65.1,
-     "trades": 9
+     "mean_excess_pct": -55.06,
+     "trades": 11
     },
     {
      "fold": 3,
      "params": {
       "day_sma": 30
      },
-     "mean_excess_pct": 35.64,
-     "trades": 13
+     "mean_excess_pct": 33.36,
+     "trades": 12
     },
     {
      "fold": 4,
      "params": {
       "day_sma": 30
      },
-     "mean_excess_pct": 23.78,
-     "trades": 14
+     "mean_excess_pct": 22.28,
+     "trades": 15
     },
     {
      "fold": 5,
      "params": {
       "day_sma": 30
      },
-     "mean_excess_pct": 26.36,
-     "trades": 7
+     "mean_excess_pct": 4.85,
+     "trades": 8
     }
    ],
-   "mean_oos_excess_pct": 11.29,
-   "total_trades": 55,
+   "mean_oos_excess_pct": 7.09,
+   "total_trades": 60,
    "winning_folds": "4/5",
    "final_params": {
     "day_sma": 30
    },
-   "promotable": true
+   "promotable": false
   },
   {
    "idea": "swing_rider",
@@ -380,8 +380,8 @@
       "surge_pct": 0.05,
       "atr_mult": 4.5
      },
-     "mean_excess_pct": 35.15,
-     "trades": 30
+     "mean_excess_pct": 28.55,
+     "trades": 24
     },
     {
      "fold": 2,
@@ -389,8 +389,8 @@
       "surge_pct": 0.05,
       "atr_mult": 4.5
      },
-     "mean_excess_pct": -57.58,
-     "trades": 27
+     "mean_excess_pct": -47.13,
+     "trades": 26
     },
     {
      "fold": 3,
@@ -398,8 +398,8 @@
       "surge_pct": 0.06,
       "atr_mult": 4.5
      },
-     "mean_excess_pct": 27.29,
-     "trades": 29
+     "mean_excess_pct": 25.81,
+     "trades": 28
     },
     {
      "fold": 4,
@@ -407,8 +407,8 @@
       "surge_pct": 0.06,
       "atr_mult": 4.5
      },
-     "mean_excess_pct": 16.59,
-     "trades": 37
+     "mean_excess_pct": 14.02,
+     "trades": 41
     },
     {
      "fold": 5,
@@ -416,18 +416,18 @@
       "surge_pct": 0.05,
       "atr_mult": 4.5
      },
-     "mean_excess_pct": 24.87,
+     "mean_excess_pct": 9.07,
      "trades": 15
     }
    ],
-   "mean_oos_excess_pct": 9.26,
-   "total_trades": 138,
+   "mean_oos_excess_pct": 6.06,
+   "total_trades": 134,
    "winning_folds": "4/5",
    "final_params": {
     "surge_pct": 0.05,
     "atr_mult": 4.5
    },
-   "promotable": true
+   "promotable": false
   },
   {
    "idea": "ratchet_rider",
@@ -438,8 +438,8 @@
       "surge_pct": 0.05,
       "trail_mult": 2.5
      },
-     "mean_excess_pct": 36.71,
-     "trades": 55
+     "mean_excess_pct": 29.69,
+     "trades": 44
     },
     {
      "fold": 2,
@@ -447,8 +447,8 @@
       "surge_pct": 0.06,
       "trail_mult": 2.5
      },
-     "mean_excess_pct": -66.59,
-     "trades": 42
+     "mean_excess_pct": -54.79,
+     "trades": 39
     },
     {
      "fold": 3,
@@ -456,8 +456,8 @@
       "surge_pct": 0.06,
       "trail_mult": 2.5
      },
-     "mean_excess_pct": 29.13,
-     "trades": 34
+     "mean_excess_pct": 27.05,
+     "trades": 33
     },
     {
      "fold": 4,
@@ -465,8 +465,8 @@
       "surge_pct": 0.06,
       "trail_mult": 2.5
      },
-     "mean_excess_pct": 19.6,
-     "trades": 38
+     "mean_excess_pct": 17.1,
+     "trades": 44
     },
     {
      "fold": 5,
@@ -474,12 +474,12 @@
       "surge_pct": 0.06,
       "trail_mult": 2.5
      },
-     "mean_excess_pct": 21.1,
-     "trades": 20
+     "mean_excess_pct": 3.47,
+     "trades": 26
     }
    ],
-   "mean_oos_excess_pct": 7.99,
-   "total_trades": 189,
+   "mean_oos_excess_pct": 4.5,
+   "total_trades": 186,
    "winning_folds": "4/5",
    "final_params": {
     "surge_pct": 0.06,
