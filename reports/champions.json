@@ -1,37 +1,35 @@
 {
  "promotable": true,
- "updated_at": "2026-08-24 03:32 UTC",
+ "updated_at": "2026-11-23 11:03 UTC",
  "threshold_excess_pct": 0.5,
  "champion": {
-  "strategy": "donchian_breakout",
-  "params": {
-   "entry_period": 10,
-   "exit_period": 6
-  },
-  "excess_pct": 2.08,
+  "strategy": "golden_cross",
+  "params": {},
+  "excess_pct": 2.7,
   "eligible": true
  },
  "runner_up": [
   {
-   "strategy": "grid_trader",
-   "params": {
-    "reference_bars": 114,
-    "grid_step": 0.015
-   },
-   "excess_pct": 2.01
-  },
-  {
-   "strategy": "donchian_breakout",
-   "params": {
-    "entry_period": 12,
-    "exit_period": 9
-   },
-   "excess_pct": 2.01
-  },
-  {
-   "strategy": "llm_trader",
+   "strategy": "mean_reversion",
    "params": {},
-   "excess_pct": 2.01
+   "excess_pct": 2.69
+  },
+  {
+   "strategy": "mean_reversion",
+   "params": {
+    "rsi_period": 20,
+    "bb_period": 36,
+    "bb_std": 2.857,
+    "oversold": 35,
+    "overbought": 69,
+    "exit_rsi": 61
+   },
+   "excess_pct": 2.68
+  },
+  {
+   "strategy": "guarded_rsi2",
+   "params": {},
+   "excess_pct": 2.67
   }
  ]
 }
